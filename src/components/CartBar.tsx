@@ -148,10 +148,11 @@ export default function CartBar({
                   {lang === 'en' ? 'Clear' : 'মুছুন'}
                 </button>
                 <button
-                  onClick={onToggleOpen}
-                  className="flex-1 btn-primary rounded-2xl px-6 py-3.5 text-sm font-semibold cursor-pointer"
+                  onClick={onCheckout}
+                  disabled={!selectedTable || !selectedSlot}
+                  className="flex-1 btn-primary rounded-2xl px-6 py-3.5 text-sm font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {lang === 'en' ? 'Confirm & Book' : 'প্রি-অর্ডার নিশ্চিত করুন'}
+                  {lang === 'en' ? 'Confirm & Book' : 'নিশ্চিত করুন ও বুক করুন'}
                 </button>
               </div>
             </div>
