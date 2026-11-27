@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import SlotSelector from '@/components/SlotSelector';
 import FloorPlan from '@/components/FloorPlan';
 import TableMenuPanel from '@/components/TableMenuPanel';
 import CartBar from '@/components/CartBar';
+import BookingModal from '@/components/BookingModal';
 import { CheckIcon } from '@/components/Icons';
 import { Hero, MenuShowcase, OurSpace, HowItWorks, SiteFooter } from '@/components/Landing';
 import { Table, TimeSlot, MenuCategory, MenuItem, CartItem } from '@/types';
@@ -32,6 +34,7 @@ function getUpcomingDates() {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [lang, setLang] = useState<'en' | 'bn'>('en');
   const [tables, setTables] = useState<Table[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
@@ -51,6 +54,7 @@ export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -301,6 +305,19 @@ export default function Home() {
         lang={lang}
         isOpen={isCartModalOpen}
         onToggleOpen={() => setIsCartModalOpen((prev) => !prev)}
+        onCheckout={() => { if (!selectedTable) { showToast(lang==='en'?'Select a table first':'??? ???? ????? ???????? ????'); return; } if (!activeSlot) { showToast(lang==='en'?'Select a time slot':'???? ???? ???? ???????? ????'); return; } setIsCartModalOpen(false); setBookingOpen(true); }}
+      />
+
+      <BookingModal
+        key={`${bookingOpen}-${selectedTable?.id || 'none'}`}
+        open={bookingOpen}
+        onClose={() => setBookingOpen(false)}
+        lang={lang}
+        cart={cart}
+        selectedTable={selectedTable}
+        selectedDate={selectedDate}
+        selectedSlot={activeSlot}
+        onSuccess={(booking) => { setBookingOpen(false); setCart([]); setIsCartModalOpen(false); showToast(lang==='en'?'Booking confirmed!':'????? ???????!'); router.push(`/booking/${booking.token}`); }}
       />
 
       <SiteFooter lang={lang} />

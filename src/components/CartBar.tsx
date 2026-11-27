@@ -15,6 +15,7 @@ interface CartBarProps {
   lang: 'en' | 'bn';
   isOpen: boolean;
   onToggleOpen: () => void;
+  onCheckout: () => void;
 }
 
 export default function CartBar({
@@ -28,6 +29,7 @@ export default function CartBar({
   lang,
   isOpen,
   onToggleOpen,
+  onCheckout,
 }: CartBarProps) {
   const [orderNote, setOrderNote] = useState('');
 
@@ -149,7 +151,7 @@ export default function CartBar({
                   onClick={onToggleOpen}
                   className="flex-1 btn-primary rounded-2xl px-6 py-3.5 text-sm font-semibold cursor-pointer"
                 >
-                  {lang === 'en' ? 'Confirm Pre-Order' : 'প্রি-অর্ডার নিশ্চিত করুন'}
+                  {lang === 'en' ? 'Confirm & Book' : 'প্রি-অর্ডার নিশ্চিত করুন'}
                 </button>
               </div>
             </div>
