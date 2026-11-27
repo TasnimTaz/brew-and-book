@@ -3,6 +3,7 @@ import { pool } from '@/lib/db';
 import { withTx, releaseExpiredHolds } from '@/lib/booking/db';
 import { normalizeBdPhone, verifySignedPayload, bookingToken, signPayload, maskPhone } from '@/lib/booking/utils';
 import QRCode from 'qrcode';
+import { emitBookingUpdate } from '@/lib/realtime';
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
       return { booking: bookingRow, table, slot, user: { name: String(name).trim(), phone: normalizedPhone }, totalBdt, items: validItems };
     });
 
+    emitBookingUpdate({ type: 'booking.updated', date: String(date).slice(0,10), slotId: Number(slotId), tableId: Number(tableId), status: 'CONFIRMED', bookingId: booking.booking.id, token: booking.booking.token });
     const qrDataUrl = await QRCode.toDataURL(booking.booking.qrPayload || booking.booking.token, { width: 320, margin: 1 });
     return NextResponse.json({
       ok: true,

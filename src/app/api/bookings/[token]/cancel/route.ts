@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { normalizeBdPhone } from '@/lib/booking/utils';
 import { releaseExpiredHolds } from '@/lib/booking/db';
+import { emitBookingUpdate } from '@/lib/realtime';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!normalized) return NextResponse.json({ error: 'Phone number required' }, { status: 400 });
 
     const res = await pool.query(
-      `SELECT b.id, b.status, b.date, s.start, u.phone
+      `SELECT b.id, b.status, b.date, b."tableId", b."slotId", s.start, u.phone
        FROM "Booking" b JOIN "TimeSlot" s ON s.id=b."slotId" JOIN "User" u ON u.id=b."userId"
        WHERE b.token=$1 LIMIT 1`, [token]
     );
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     await pool.query(`UPDATE "Booking" SET status='CANCELLED', "updatedAt"=NOW() WHERE id=$1`, [b.id]);
+    emitBookingUpdate({ type:'booking.updated', date: new Date(b.date).toISOString().slice(0,10), slotId: Number(b.slotId), tableId: Number(b.tableId), status:'CANCELLED', bookingId: b.id, token });
     return NextResponse.json({ ok: true, status: 'CANCELLED' });
   } catch (e) {
     console.error('POST /api/bookings/[token]/cancel failed', e);

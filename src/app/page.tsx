@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { io, Socket } from 'socket.io-client';
 import Navbar from '@/components/Navbar';
 import SlotSelector from '@/components/SlotSelector';
 import FloorPlan from '@/components/FloorPlan';
@@ -100,6 +101,7 @@ export default function Home() {
       try {
         const res = await fetch(`/api/tables?date=${selectedDate}&slotId=${selectedSlotId}`, { signal: controller.signal });
         const data = await res.json();
+        if (controller.signal.aborted) return;
         if (data.tables) {
           setTables(data.tables);
           setSelectedTable((prev) => (prev ? data.tables.find((t: Table) => t.id === prev.id) || prev : null));
@@ -110,6 +112,26 @@ export default function Home() {
     })();
     return () => controller.abort();
   }, [selectedDate, selectedSlotId]);
+
+  const socketRef = useRef<Socket | null>(null);
+  useEffect(() => {
+    if (!selectedDate || !selectedSlotId) return;
+    if (!socketRef.current) socketRef.current = io({ path: '/socket.io' });
+    const socket = socketRef.current;
+    socket.emit('join-slot', { date: selectedDate, slotId: selectedSlotId });
+    const onUpdate = (payload: { date: string; slotId: number }) => {
+      if (payload?.date === selectedDate && Number(payload?.slotId) === Number(selectedSlotId)) {
+        void fetch(`/api/tables?date=${selectedDate}&slotId=${selectedSlotId}`).then(r=>r.json()).then(data=>{ if(data.tables){ setTables(data.tables); setSelectedTable(prev=>prev?data.tables.find((t:Table)=>t.id===prev.id)||prev:null); }}).catch(()=>{});
+      }
+    };
+    socket.on('booking.updated', onUpdate);
+    return () => {
+      socket.emit('leave-slot', { date: selectedDate, slotId: selectedSlotId });
+      socket.off('booking.updated', onUpdate);
+    };
+  }, [selectedDate, selectedSlotId]);
+
+  useEffect(() => () => { socketRef.current?.disconnect(); socketRef.current = null; }, []);
 
   const zones = useMemo(() => {
     const set = new Set<string>();
