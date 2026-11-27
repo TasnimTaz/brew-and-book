@@ -13,6 +13,23 @@ interface FloorPlanProps {
   lang: 'en' | 'bn';
 }
 
+// Collision-free layout. Chairs sit above/below tables only, so every table has >= 30px clearance.
+const LAYOUT: Record<string, { x: number; y: number; width?: number; height?: number }> = {
+  T01: { x: 44, y: 66 }, T02: { x: 144, y: 66 }, T03: { x: 244, y: 66 },
+  T07: { x: 360, y: 62 }, T14: { x: 480, y: 66 },
+  T04: { x: 44, y: 186 }, T05: { x: 174, y: 186 }, T06: { x: 304, y: 186 }, T13: { x: 434, y: 186 },
+  T08: { x: 44, y: 308, width: 140, height: 64 }, T09: { x: 214, y: 308, width: 140, height: 64 }, T15: { x: 384, y: 308, width: 140, height: 64 },
+  T10: { x: 56, y: 412 }, T11: { x: 140, y: 412 }, T12: { x: 240, y: 406 },
+};
+
+const chairColors = (status: string, selected: boolean) => {
+  if (selected) return { fill: '#5c3d2e', stroke: '#c68b59' };
+  if (status === 'BOOKED' || status === 'OCCUPIED') return { fill: '#fde2e4', stroke: '#f4a3ad' };
+  if (status === 'HELD') return { fill: '#fef0d0', stroke: '#f2c36b' };
+  if (status === 'UNAVAILABLE') return { fill: '#e8edf2', stroke: '#c5ced8' };
+  return { fill: '#f3e8d8', stroke: '#d9c3a3' };
+};
+
 export default function FloorPlan({
   tables,
   selectedTable,
@@ -194,13 +211,13 @@ export default function FloorPlan({
             {view.z > 1 ? (en ? 'Drag to move the map' : 'ম্যাপ সরাতে ড্র্যাগ করুন') : (en ? 'Use + to zoom in' : 'জুম করতে + চাপুন')}
           </div>
 
-          <div className="absolute left-4 bottom-4 z-10 flex flex-wrap gap-2 rounded-xl bg-white/90 backdrop-blur px-3 py-2 border border-[#e8dccb] shadow-sm text-[11px] font-semibold text-primary-dark pointer-events-none">
+                    <div className="absolute left-4 bottom-4 z-10 flex flex-wrap gap-2 rounded-xl bg-white/90 backdrop-blur px-3 py-2 border border-[#e8dccb] shadow-sm text-[11px] font-semibold text-primary-dark pointer-events-none">
             <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>Available</span>
             <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span>Held</span>
             <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500"></span>Booked</span>
             <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-300"></span>Unavailable</span>
           </div>
-          <svg
+<svg
             viewBox={viewBox}
             preserveAspectRatio="xMidYMid meet"
             className="absolute inset-0 h-full w-full select-none"
@@ -264,9 +281,9 @@ export default function FloorPlan({
 
             {/* Patio Glass Partition & Sliding Door */}
             <line x1="24" y1="390" x2="370" y2="390" stroke="#78685a" strokeWidth="2.5" />
-            <line x1="196" y1="390" x2="236" y2="390" stroke="#38bdf8" strokeWidth="4" />
-            <rect x="196" y="384" width="40" height="12" rx="4" fill="#fcfaf7" stroke="#d5c4b1" strokeWidth="1" />
-            <text x="216" y="393" textAnchor="middle" fill="#5c3d2e" fontSize="6.5" fontWeight="700" letterSpacing="0.6">
+            <line x1="180" y1="390" x2="220" y2="390" stroke="#38bdf8" strokeWidth="4" />
+            <rect x="180" y="384" width="40" height="12" rx="4" fill="#fcfaf7" stroke="#d5c4b1" strokeWidth="1" />
+            <text x="200" y="393" textAnchor="middle" fill="#5c3d2e" fontSize="6.5" fontWeight="700" letterSpacing="0.6">
               DOOR
             </text>
 
@@ -277,10 +294,10 @@ export default function FloorPlan({
             <text x="462" y="45" fill="#b8a898" fontSize="8.5" fontWeight="700" letterSpacing="1.4">
               QUIET STUDY
             </text>
-            <text x="42" y="149" fill="#b8a898" fontSize="8.5" fontWeight="700" letterSpacing="1.4">
+            <text x="42" y="166" fill="#b8a898" fontSize="8.5" fontWeight="700" letterSpacing="1.4">
               MAIN ROASTERY HALL
             </text>
-            <text x="42" y="270" fill="#b8a898" fontSize="8.5" fontWeight="700" letterSpacing="1.4">
+            <text x="42" y="294" fill="#b8a898" fontSize="8.5" fontWeight="700" letterSpacing="1.4">
               FAMILY &amp; GROUP BOOTHS
             </text>
             <text x="62" y="508" fill="#8c7864" fontSize="8.5" fontWeight="700" letterSpacing="1.4">
@@ -341,7 +358,7 @@ export default function FloorPlan({
             {/* === 6. VECTOR POTTED PLANTS === */}
             {[
               { x: 42, y: 408 },
-              { x: 350, y: 408 },
+              { x: 358, y: 408 },
               { x: 42, y: 504 },
               { x: 572, y: 44 },
             ].map((plant, idx) => (
@@ -355,12 +372,14 @@ export default function FloorPlan({
             ))}
 
             {/* === 7. INTERACTIVE TABLES === */}
-            {tables.map((table) => {
+            {tables.map((rawTable) => {
+              const table = { ...rawTable, ...(LAYOUT[rawTable.code] || {}) };
               const isSelected = selectedTable?.id === table.id;
               const isHovered = hoveredTable?.id === table.id;
               const isFiltered = isTableFilteredOut(table);
               const status = table.status || 'AVAILABLE';
               const colors = getStatusColors(status, isSelected);
+              const chair = chairColors(status, isSelected);
 
               const isCircle = table.shape === 'circle';
               const w = table.width || (isCircle ? 70 : 100);
@@ -379,6 +398,7 @@ export default function FloorPlan({
                   onMouseEnter={() => setHoveredTable(table)}
                   onMouseLeave={() => setHoveredTable(null)}
                   filter={isSelected ? 'url(#selectedGlow)' : 'url(#tableShadow)'}
+                  style={{ transform: isHovered && !isFiltered ? 'translateY(-2px)' : 'none', transition: 'transform 150ms ease, opacity 200ms ease' }}
                 >
                   {/* Selection Pulse Halo */}
                   {isSelected && (
@@ -410,28 +430,28 @@ export default function FloorPlan({
                   {/* Chairs */}
                   {table.seats === 2 && (
                     <>
-                      <rect x={cx - (isCircle ? r + 15 : w / 2 + 15)} y={cy - 10} width="10" height="20" rx="4" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={cx + (isCircle ? r + 5 : w / 2 + 5)} y={cy - 10} width="10" height="20" rx="4" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
+                      <rect x={cx - 10} y={table.y - 13} width="20" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={cx - 10} y={table.y + h + 4} width="20" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
                     </>
                   )}
 
                   {table.seats === 4 && (
                     <>
-                      <rect x={cx - 26} y={table.y - 13} width="20" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={cx + 6} y={table.y - 13} width="20" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={cx - 26} y={table.y + h + 4} width="20" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={cx + 6} y={table.y + h + 4} width="20" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
+                      <rect x={cx - 26} y={table.y - 13} width="20" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={cx + 6} y={table.y - 13} width="20" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={cx - 26} y={table.y + h + 4} width="20" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={cx + 6} y={table.y + h + 4} width="20" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
                     </>
                   )}
 
                   {table.seats >= 6 && (
                     <>
-                      <rect x={table.x + 12} y={table.y - 13} width="24" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={table.x + 58} y={table.y - 13} width="24" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={table.x + 104} y={table.y - 13} width="24" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={table.x + 12} y={table.y + h + 4} width="24" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={table.x + 58} y={table.y + h + 4} width="24" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
-                      <rect x={table.x + 104} y={table.y + h + 4} width="24" height="9" rx="3.5" fill={colors.chairFill} stroke={colors.chairStroke} strokeWidth="1.5" />
+                      <rect x={table.x + 12} y={table.y - 13} width="24" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={table.x + 58} y={table.y - 13} width="24" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={table.x + 104} y={table.y - 13} width="24" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={table.x + 12} y={table.y + h + 4} width="24" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={table.x + 58} y={table.y + h + 4} width="24" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
+                      <rect x={table.x + 104} y={table.y + h + 4} width="24" height="9" rx="3.5" fill={chair.fill} stroke={chair.stroke} strokeWidth="1.5" />
                     </>
                   )}
 
@@ -457,6 +477,9 @@ export default function FloorPlan({
                       strokeWidth={isSelected || isHovered ? 3 : 2}
                     />
                   )}
+
+                  {/* Status dot */}
+                  <circle cx={isCircle ? cx + r * 0.62 : table.x + w - 14} cy={isCircle ? cy - r * 0.62 : table.y + 14} r="4.5" fill={colors.stroke} stroke="#ffffff" strokeWidth="1.5" />
 
                   {/* Table Code */}
                   <text
