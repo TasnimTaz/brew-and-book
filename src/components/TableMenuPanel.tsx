@@ -151,9 +151,13 @@ export default function TableMenuPanel({
         <div className="p-5 sm:p-6 border-b border-border-light bg-surface">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-dark text-accent-soft font-display font-bold text-lg">
-                {selectedTable.code}
-              </div>
+              {selectedTable.photoUrl ? (
+                <img src={selectedTable.photoUrl} alt={`Table ${selectedTable.code}`} className="h-14 w-14 rounded-2xl object-cover border border-border-light" />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-dark text-accent-soft font-display font-bold text-lg">
+                  {selectedTable.code}
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-display text-xl font-semibold text-primary-dark">
@@ -242,9 +246,13 @@ export default function TableMenuPanel({
               const simpleCartEntry = !hasOptions ? getItemCartEntries(item.id)[0] : null;
               return (
                 <div key={item.id} className="flex items-center gap-4 rounded-2xl border border-border-light bg-background/40 p-4 hover:bg-surface hover:border-accent/20 hover:shadow-[0_4px_16px_-8px_rgba(36,24,16,0.08)] transition-all">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-surface-alt text-accent">
-                    <CoffeeIcon className="h-6 w-6" />
-                  </div>
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name} className="h-14 w-14 shrink-0 rounded-2xl object-cover border border-border-light" />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-surface-alt text-accent">
+                      <CoffeeIcon className="h-6 w-6" />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">

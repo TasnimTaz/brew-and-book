@@ -48,3 +48,21 @@ export async function PATCH(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const catId = parseInt(id, 10);
+    const inUse = await pool.query(`SELECT 1 FROM "MenuItem" WHERE "categoryId" = $1 LIMIT 1`, [catId]);
+    if ((inUse.rowCount ?? 0) > 0) {
+      return NextResponse.json({ error: 'Category has menu items. Move or delete items first.' }, { status: 409 });
+    }
+    const result = await pool.query(`DELETE FROM "MenuCategory" WHERE id = $1 RETURNING id`, [catId]);
+    if (result.rowCount === 0) return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    console.error('DELETE /api/menu/categories/[id] failed', error);
+    const message = error instanceof Error ? error.message : 'Failed to delete category';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

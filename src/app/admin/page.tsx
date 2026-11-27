@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatNameBn, setNewCatNameBn] = useState('');
 
   // Dragging state for Floor Plan Editor
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -39,6 +41,7 @@ export default function AdminPage() {
   const [newItemPrice, setNewItemPrice] = useState<number>(200);
   const [newItemDesc, setNewItemDesc] = useState('');
   const [newItemTags, setNewItemTags] = useState('hot, veg');
+  const [newItemImageUrl, setNewItemImageUrl] = useState('');
 
   const notify = (msg: string) => {
     setStatusMessage(msg);
@@ -134,6 +137,55 @@ export default function AdminPage() {
     }
   };
 
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    try {
+      const res = await fetch('/api/menu/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCatName.trim(), nameBn: newCatNameBn.trim() || null, sortOrder: categories.length }),
+      });
+      if (!res.ok) throw new Error();
+      setNewCatName('');
+      setNewCatNameBn('');
+      notify('Category added');
+      loadData();
+    } catch {
+      alert('Failed to create category');
+    }
+  };
+
+  const handleRenameCategory = async (cat: MenuCategory) => {
+    const name = prompt('Category name (EN):', cat.name);
+    if (!name) return;
+    const nameBn = prompt('Category name (BN, optional):', cat.nameBn || '') ?? '';
+    try {
+      await fetch(`/api/menu/categories/${cat.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), nameBn: nameBn.trim() || null }),
+      });
+      notify('Category updated');
+      loadData();
+    } catch {
+      alert('Failed to update category');
+    }
+  };
+
+  const handleDeleteCategory = async (cat: MenuCategory) => {
+    if (!confirm(`Delete category "${cat.name}"?`)) return;
+    try {
+      const res = await fetch(`/api/menu/categories/${cat.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      notify('Category deleted');
+      loadData();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete category');
+    }
+  };
+
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -151,6 +203,7 @@ export default function AdminPage() {
           nameBn: newItemNameBn || null,
           description: newItemDesc || null,
           priceBdt: newItemPrice,
+          imageUrl: newItemImageUrl || null,
           tags: tagsArray,
           available: true,
         }),
@@ -160,6 +213,7 @@ export default function AdminPage() {
       setNewItemName('');
       setNewItemNameBn('');
       setNewItemDesc('');
+      setNewItemImageUrl('');
       notify('New menu item added');
       loadData();
     } catch {
@@ -404,6 +458,74 @@ export default function AdminPage() {
               </button>
             </div>
 
+            <div className="rounded-2xl border border-border/80 bg-surface p-4 shadow-xs space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-primary-dark">Categories</h3>
+                  <p className="text-[11px] text-muted">Create, rename, or delete menu categories.</p>
+                </div>
+              </div>
+              <form onSubmit={handleCreateCategory} className="flex flex-col sm:flex-row gap-2">
+                <input value={newCatName} onChange={(e)=>setNewCatName(e.target.value)} placeholder="Category name (EN)" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+                <input value={newCatNameBn} onChange={(e)=>setNewCatNameBn(e.target.value)} placeholder="Name (BN, optional)" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+                <button type="submit" className="rounded-xl bg-primary-dark px-4 py-2 text-xs font-bold text-white hover:bg-primary cursor-pointer">Add Category</button>
+              </form>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((c)=>(
+                  <div key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs">
+                    <span className="font-semibold text-primary-dark">{c.name}</span>
+                    {c.nameBn && <span className="text-muted">({c.nameBn})</span>}
+                    <button onClick={()=>handleRenameCategory(c)} className="ml-1 text-muted hover:text-primary-dark cursor-pointer">Edit</button>
+                    <button onClick={()=>handleDeleteCategory(c)} className="text-muted hover:text-rose-600 cursor-pointer">Delete</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border/80 bg-surface p-4 shadow-xs space-y-3">
+
+              <div>
+
+                <h3 className="text-sm font-bold text-primary-dark">Categories</h3>
+
+                <p className="text-[11px] text-muted">Create, rename, or delete menu categories.</p>
+
+              </div>
+
+              <form onSubmit={handleCreateCategory} className="flex flex-col sm:flex-row gap-2">
+
+                <input value={newCatName} onChange={(e)=>setNewCatName(e.target.value)} placeholder="Category name (EN)" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+
+                <input value={newCatNameBn} onChange={(e)=>setNewCatNameBn(e.target.value)} placeholder="Name (BN, optional)" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+
+                <button type="submit" className="rounded-xl bg-primary-dark px-4 py-2 text-xs font-bold text-white hover:bg-primary cursor-pointer">Add Category</button>
+
+              </form>
+
+              <div className="flex flex-wrap gap-2">
+
+                {categories.map((c)=>(
+
+                  <div key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs">
+
+                    <span className="font-semibold text-primary-dark">{c.name}</span>
+
+                    {c.nameBn && <span className="text-muted">({c.nameBn})</span>}
+
+                    <button onClick={()=>handleRenameCategory(c)} className="ml-1 text-muted hover:text-primary-dark cursor-pointer">Edit</button>
+
+                    <button onClick={()=>handleDeleteCategory(c)} className="text-muted hover:text-rose-600 cursor-pointer">Delete</button>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            </div>
+
+
+
             <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-xs">
               <table className="w-full text-left text-xs">
                 <thead className="border-b border-border bg-background/60 font-bold uppercase tracking-wider text-muted">
@@ -421,8 +543,17 @@ export default function AdminPage() {
                     return (
                       <tr key={item.id} className="hover:bg-background/40 transition-colors">
                         <td className="px-4 py-3.5">
-                          <div className="font-bold text-primary-dark text-sm">{item.name}</div>
-                          {item.nameBn && <div className="text-xs text-muted">{item.nameBn}</div>}
+                          <div className="flex items-center gap-3">
+                            {item.imageUrl ? (
+                              <img src={item.imageUrl} alt={item.name} className="h-10 w-10 rounded-lg object-cover border border-border" />
+                            ) : (
+                              <div className="h-10 w-10 rounded-lg bg-surface-alt border border-border" />
+                            )}
+                            <div>
+                              <div className="font-bold text-primary-dark text-sm">{item.name}</div>
+                              {item.nameBn && <div className="text-xs text-muted">{item.nameBn}</div>}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-3.5 font-medium text-muted">{cat?.name || '—'}</td>
                         <td className="px-4 py-3.5 font-extrabold text-primary-dark text-sm">

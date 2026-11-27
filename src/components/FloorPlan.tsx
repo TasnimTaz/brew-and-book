@@ -137,7 +137,13 @@ export default function FloorPlan({
           className="mx-auto transition-transform duration-200 origin-top"
           style={{ width: `${zoom * 100}%`, maxWidth: `${zoom * 820}px` }}
         >
-          <svg viewBox="0 0 620 540" className="w-full h-auto select-none drop-shadow-xs" onMouseLeave={() => setHoveredTable(null)}>
+                    <div className="absolute left-4 bottom-4 z-10 flex flex-wrap gap-2 rounded-xl bg-white/90 backdrop-blur px-3 py-2 border border-border/60 shadow-sm text-[11px] font-semibold text-primary-dark">
+            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>Available</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span>Held</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500"></span>Booked</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-300"></span>Unavailable</span>
+          </div>
+<svg viewBox="0 0 620 540" className="w-full h-auto select-none drop-shadow-xs" onMouseLeave={() => setHoveredTable(null)}>
             <defs>
               <pattern id="floorGrid" width="24" height="24" patternUnits="userSpaceOnUse">
                 <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#efe6da" strokeWidth="0.8" />
