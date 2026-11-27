@@ -55,7 +55,7 @@ export default function CartBar({
                     : (lang === 'en' ? 'Your Order' : 'আপনার অর্ডার')}
                 </div>
                 <div className="text-xs text-white/60 mt-0.5">
-                  {lang === 'en' ? 'Subtotal' : 'সাবটোটাল'}: <span className="text-accent-soft font-bold">৳{totalAmount}</span>
+                  {lang === 'en' ? 'Subtotal' : 'সাবটোটাল'}: <span className="text-accent-soft font-bold">{lang === 'en' ? 'BDT' : '৳'} {totalAmount}</span>
                 </div>
               </div>
             </div>
@@ -100,7 +100,7 @@ export default function CartBar({
                         {lang === 'bn' ? (item.nameBn || item.name) : item.name}
                       </h4>
                       {optString && <p className="text-[11px] text-muted mt-0.5">{optString}</p>}
-                      <p className="text-sm text-accent font-semibold mt-1">৳{item.priceBdt * item.quantity}</p>
+                      <p className="text-sm text-accent font-semibold mt-1">{lang === 'en' ? 'BDT' : '৳'} {item.priceBdt * item.quantity}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center rounded-xl border border-border bg-background">
@@ -131,7 +131,7 @@ export default function CartBar({
             <div className="px-6 py-5 border-t border-border-light bg-surface-alt/30 sm:rounded-b-3xl">
               <div className="flex items-center justify-between text-sm mb-1.5">
                 <span className="text-muted">{lang === 'en' ? 'Subtotal' : 'সাবটোটাল'}</span>
-                <span className="font-medium text-foreground">৳{totalAmount}</span>
+                <span className="font-medium text-foreground">{lang === 'en' ? 'BDT' : '৳'} {totalAmount}</span>
               </div>
               <div className="flex items-center justify-between text-sm mb-4">
                 <span className="text-muted">{lang === 'en' ? 'Reservation fee' : 'রিজার্ভেশন ফি'}</span>
@@ -139,7 +139,7 @@ export default function CartBar({
               </div>
               <div className="flex items-center justify-between text-base font-bold text-primary-dark mb-5 pt-4 border-t border-border-light">
                 <span>{lang === 'en' ? 'Total' : 'মোট'}</span>
-                <span className="font-display text-xl">৳{totalAmount}</span>
+                <span className="font-display text-xl">{lang === 'en' ? 'BDT' : '৳'} {totalAmount}</span>
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={onClearCart} className="px-4 py-3 text-sm font-medium text-muted hover:text-danger transition-colors cursor-pointer">

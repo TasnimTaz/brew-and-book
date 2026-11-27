@@ -120,7 +120,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceBdt: newPrice }),
       });
-      notify(`Updated ${item.name} price to ৳${newPrice}`);
+      notify(`Updated ${item.name} price to BDT ${newPrice}`);
     } catch {
       loadData();
     }
@@ -557,7 +557,7 @@ export default function AdminPage() {
                         </td>
                         <td className="px-4 py-3.5 font-medium text-muted">{cat?.name || '—'}</td>
                         <td className="px-4 py-3.5 font-extrabold text-primary-dark text-sm">
-                          ৳{item.priceBdt}
+                          BDT {item.priceBdt}
                         </td>
                         <td className="px-4 py-3.5">
                           <button

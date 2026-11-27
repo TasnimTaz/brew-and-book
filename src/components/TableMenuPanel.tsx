@@ -260,7 +260,7 @@ export default function TableMenuPanel({
                           {lang === 'bn' ? (item.nameBn || item.name) : item.name}
                         </h4>
                       </div>
-                      <span className="font-bold text-sm text-primary-dark whitespace-nowrap">৳{item.priceBdt}</span>
+                      <span className="font-bold text-sm text-primary-dark whitespace-nowrap">{lang === 'en' ? 'BDT' : '৳'} {item.priceBdt}</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <div className="flex gap-1 flex-wrap">
@@ -309,7 +309,7 @@ export default function TableMenuPanel({
               <div className="flex items-start justify-between mb-5">
                 <div>
                   <h4 className="font-display text-lg font-semibold text-primary-dark">{activeItemForOptions.name}</h4>
-                  <p className="text-accent font-semibold">৳{activeItemForOptions.priceBdt}</p>
+                  <p className="text-accent font-semibold">{lang === 'en' ? 'BDT' : '৳'} {activeItemForOptions.priceBdt}</p>
                 </div>
                 <button onClick={() => setActiveItemForOptions(null)} className="rounded-lg p-1.5 text-muted hover:text-foreground cursor-pointer"><XIcon className="h-4 w-4" /></button>
               </div>
