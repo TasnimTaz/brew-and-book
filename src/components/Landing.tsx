@@ -62,11 +62,26 @@ export function Hero({ lang, tableCount, itemCount }: { lang: 'en' | 'bn'; table
         </div>
         <div className="relative mx-auto w-full max-w-md">
           <CupArt className="h-auto w-full drop-shadow-[0_30px_60px_rgba(198,139,89,0.25)]" />
-          <div className="absolute -left-2 top-10 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-md sm:-left-8">
-            <p className="text-[11px] text-[#bba992]">{en ? 'Table T05 · 4 seats' : 'টেবিল T05 · ৪ সিট'}</p><p className="text-sm font-bold text-emerald-400">{en ? 'Available now' : 'এখন খালি'}</p>
+          <div className="absolute -left-2 top-8 sm:-left-10 rounded-2xl border border-white/10 bg-[#241710]/80 px-4 py-3 backdrop-blur-xl shadow-xl shadow-black/20 min-w-[170px]">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bba992]">{en ? 'Table' : 'টেবিল'}</p>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                {en ? 'Available' : 'খালি'}
+              </span>
+            </div>
+            <p className="mt-2 font-display text-lg font-semibold text-[#f6ebdd]">T05</p>
+            <p className="text-xs text-[#bba992]">{en ? '4 seats · Window side' : '৪ সিট · জানালার পাশে'}</p>
           </div>
-          <div className="absolute -right-2 bottom-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-md sm:-right-6">
-            <p className="text-[11px] text-[#bba992]">{en ? 'Booking token' : 'বুকিং টোকেন'}</p><p className="font-mono text-sm font-bold text-accent">BB-T05-0042</p>
+
+          <div className="absolute -right-2 bottom-10 sm:-right-8 rounded-2xl border border-accent/20 bg-[#241710]/85 px-4 py-3.5 backdrop-blur-xl shadow-xl shadow-black/20 min-w-[190px]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/80">BREW &amp; BOOK</p>
+            <p className="mt-2 text-[11px] text-[#bba992]">{en ? 'Booking token' : 'বুকিং টোকেন'}</p>
+            <p className="mt-0.5 font-mono text-base font-bold tracking-wide text-[#f6ebdd]">BB-T05-0042</p>
+            <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-[#bba992]">
+              <span>{en ? 'Today · 7:00 PM' : 'আজ · ৭:০০ PM'}</span>
+              <span className="font-semibold text-emerald-400">{en ? 'Confirmed' : 'নিশ্চিত'}</span>
+            </div>
           </div>
         </div>
       </div>
