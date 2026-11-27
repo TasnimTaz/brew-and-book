@@ -73,3 +73,29 @@ body {
 
 html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 .font-display { font-family: var(--font-display), Georgia, serif; }
+
+@keyframes steam-rise {
+  0% {
+    transform: translateY(0) scaleX(1);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  45% {
+    transform: translateY(-16px) translateX(-2px) scaleX(1.06);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translateY(-34px) translateX(3px) scaleX(0.94);
+    opacity: 0.18;
+  }
+  100% {
+    transform: translateY(-52px) translateX(-1px) scaleX(1.1);
+    opacity: 0;
+  }
+}
+
+.cup-steam path {
+  filter: blur(0.4px);
+}

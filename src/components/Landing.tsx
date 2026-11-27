@@ -19,9 +19,30 @@ export function CupArt({ className = '' }: { className?: string }) {
         <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stopColor="#c68b59" stopOpacity=".35" /><stop offset="1" stopColor="#c68b59" stopOpacity="0" /></radialGradient>
       </defs>
       <circle cx="160" cy="190" r="150" fill="url(#glow)" />
-      {[70, 160, 250].map((x, i) => (
-        <path key={x} d={`M${x} 90 C ${x - 14} 70, ${x + 14} 50, ${x} 30`} stroke="#e8d3b8" strokeOpacity={0.5 - i * 0.08} strokeWidth="4" strokeLinecap="round" />
-      ))}
+      <g className="cup-steam" aria-hidden>
+        {[
+          { x: 120, d: 0, s: 3.8 },
+          { x: 160, d: 1.1, s: 4.4 },
+          { x: 200, d: 0.5, s: 4.0 },
+        ].map((p, i) => (
+          <g key={i} style={{ transformOrigin: `${p.x}px 95px`, animation: `steam-rise ${p.s}s ease-in-out ${p.d}s infinite` }}>
+            <path
+              d={`M${p.x} 96 C ${p.x - 12} 78, ${p.x + 12} 60, ${p.x - 2} 40 C ${p.x - 14} 22, ${p.x + 10} 10, ${p.x + 2} -2`}
+              stroke="#efe1cf"
+              strokeOpacity="0.45"
+              strokeWidth="4.5"
+              strokeLinecap="round"
+            />
+            <path
+              d={`M${p.x + 7} 100 C ${p.x - 2} 84, ${p.x + 16} 68, ${p.x + 5} 52`}
+              stroke="#f6eadc"
+              strokeOpacity="0.25"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </g>
+        ))}
+      </g>
       <path d="M72 120 H248 L228 322 Q226 338 210 338 H110 Q94 338 92 322 Z" fill="url(#cupBody)" />
       <path d="M80 190 H240 L234 262 H86 Z" fill="url(#sleeve)" />
       <text x="160" y="224" textAnchor="middle" fill="#f0d9bd" fontSize="15" fontFamily="serif" fontWeight="700" letterSpacing="2.5">BREW &amp; BOOK</text>
