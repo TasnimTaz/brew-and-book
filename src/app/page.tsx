@@ -165,7 +165,7 @@ export default function Home() {
       ];
     });
     showToast(
-      lang === 'en' ? `Added ${item.name} to order` : `${item.name} অর্ডারে যোগ হয়েছে`
+      lang === 'en' ? `Added ${item.name} to order` : `${item.nameBn || item.name} ??????? ??? ??????`
     );
   };
 
@@ -222,8 +222,8 @@ export default function Home() {
 
       <section id="book" className="bg-[#f6f2ec] py-14">
       <div className="mx-auto max-w-[1280px] px-5 lg:px-8 mb-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">{lang === 'en' ? 'Live floor plan' : 'লাইভ ফ্লোর প্ল্যান'}</p>
-        <h2 className="font-display mt-2 text-4xl font-semibold text-primary-dark">{lang === 'en' ? 'Choose your table' : 'আপনার টেবিল বেছে নিন'}</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">{lang === 'en' ? 'Live floor plan' : '???? ????? ???????'}</p>
+        <h2 className="font-display mt-2 text-4xl font-semibold text-primary-dark">{lang === 'en' ? 'Choose your table' : '????? ????? ???? ???'}</h2>
       </div>
       <main className="flex-1 mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 space-y-5">
         {/* Sleek Slot & Filter Bar */}
@@ -251,7 +251,7 @@ export default function Home() {
                 <div className="flex flex-col items-center gap-3">
                   <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                   <p className="text-xs font-semibold text-muted">
-                    {lang === 'en' ? 'Loading live floor plan...' : 'ফ্লোর প্ল্যান লোড হচ্ছে...'}
+                    {lang === 'en' ? 'Loading live floor plan...' : '???? ????? ??????? ??? ?????...'}
                   </p>
                 </div>
               </div>
