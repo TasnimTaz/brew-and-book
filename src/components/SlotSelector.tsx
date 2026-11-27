@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { TimeSlot } from '@/types';
-import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon } from './Icons';
 
 interface SlotSelectorProps {
   dates: { dateStr: string; label: string; dayName: string }[];
@@ -20,142 +19,135 @@ interface SlotSelectorProps {
   lang: 'en' | 'bn';
 }
 
-export default function SlotSelector({
-  dates,
-  selectedDate,
-  onSelectDate,
-  slots,
-  selectedSlotId,
-  onSelectSlot,
-  selectedSeats,
-  onSelectSeats,
-  selectedZone,
-  onSelectZone,
-  zones,
-  counts,
-  lang,
-}: SlotSelectorProps) {
+const fmt = (t: string) => {
+  const [h, m] = t.split(':').map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+};
+
+function Step({ n, title, hint }: { n: number; title: string; hint?: string }) {
   return (
-    <section className="rounded-3xl border border-border-light bg-surface p-5 sm:p-6 shadow-[0_1px_3px_rgba(36,24,16,0.02),0_8px_24px_-12px_rgba(36,24,16,0.08)] space-y-5">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Date */}
+    <div className="mb-3 flex items-center gap-2.5">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#2c1b12] text-[11px] font-bold text-[#e9c49a]">{n}</span>
+      <h3 className="text-sm font-bold text-primary-dark">{title}</h3>
+      {hint && <span className="text-xs text-muted">{hint}</span>}
+    </div>
+  );
+}
+
+export default function SlotSelector(p: SlotSelectorProps) {
+  const en = p.lang === 'en';
+  const scroller = useRef<HTMLDivElement>(null);
+  const scroll = (dir: number) => scroller.current?.scrollBy({ left: dir * 260, behavior: 'smooth' });
+
+  const activeSlot = p.slots.find((s) => s.id === p.selectedSlotId);
+  const selDate = new Date(p.selectedDate + 'T00:00:00');
+  const summary = `${selDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}${activeSlot ? ` · ${fmt(activeSlot.start)} – ${fmt(activeSlot.end)}` : ''}`;
+
+  const groups = [
+    { key: 'morning', label: en ? 'Morning' : 'সকাল', test: (h: number) => h < 12 },
+    { key: 'afternoon', label: en ? 'Afternoon' : 'দুপুর', test: (h: number) => h >= 12 && h < 17 },
+    { key: 'evening', label: en ? 'Evening' : 'সন্ধ্যা', test: (h: number) => h >= 17 },
+  ]
+    .map((g) => ({ ...g, items: p.slots.filter((s) => g.test(Number(s.start.split(':')[0]))) }))
+    .filter((g) => g.items.length > 0);
+
+  const seatOpts: (number | 'all')[] = ['all', 2, 4, 6];
+  const zoneOpts = ['all', ...p.zones];
+
+  const pill = (active: boolean) =>
+    `rounded-full border px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer ${
+      active ? 'border-[#2c1b12] bg-[#2c1b12] text-[#f6ebdd]' : 'border-[#e8dccb] bg-white text-muted hover:border-accent hover:text-primary-dark'
+    }`;
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[#e8dccb] bg-white shadow-[0_10px_40px_-20px_rgba(60,42,30,0.35)]">
+      {/* Summary bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#2c1b12] px-5 py-3.5 sm:px-6">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c9a57e]">{en ? 'Your visit' : 'আপনার ভিজিট'}</p>
+          <p className="font-display text-lg font-semibold text-[#f6ebdd]">{summary}</p>
+        </div>
+        <span className="flex items-center gap-2 rounded-full bg-emerald-500/15 px-3.5 py-1.5 text-xs font-bold text-emerald-300">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+          {p.counts.available} {en ? 'tables open' : 'টি টেবিল খালি'}
+        </span>
+      </div>
+
+      <div className="grid gap-8 p-5 sm:p-6 lg:grid-cols-12">
+        {/* 1. Date */}
         <div className="lg:col-span-5">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-muted-light mb-3">
-            <CalendarIcon className="h-3.5 w-3.5 text-accent" />
-            <span>{lang === 'en' ? 'Select Date' : 'তারিখ নির্বাচন'}</span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {dates.map((d) => {
-              const isSelected = d.dateStr === selectedDate;
-              return (
-                <button
-                  key={d.dateStr}
-                  onClick={() => onSelectDate(d.dateStr)}
-                  className={`flex shrink-0 flex-col items-center rounded-2xl px-4 py-3 min-w-[72px] transition-all duration-200 cursor-pointer ${
-                    isSelected
-                      ? 'bg-primary-dark text-white shadow-[0_4px_16px_rgba(36,24,16,0.25)] scale-[1.02]'
-                      : 'bg-background border border-border-light text-foreground hover:border-accent/40 hover:bg-surface-alt/40'
-                  }`}
-                >
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'text-accent-soft' : 'text-muted-light'}`}>
-                    {d.dayName}
-                  </span>
-                  <span className="text-sm font-bold mt-1 whitespace-nowrap">{d.label}</span>
-                </button>
-              );
-            })}
+          <Step n={1} title={en ? 'Pick a date' : 'তারিখ বাছুন'} />
+          <div className="relative">
+            <button onClick={() => scroll(-1)} aria-label="Previous dates" className="absolute -left-2 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#e8dccb] bg-white text-primary-dark shadow-sm hover:border-accent sm:flex cursor-pointer">‹</button>
+            <div ref={scroller} className="scrollbar-none flex gap-2.5 overflow-x-auto scroll-smooth py-1 sm:px-3">
+              {p.dates.map((d) => {
+                const dt = new Date(d.dateStr + 'T00:00:00');
+                const active = d.dateStr === p.selectedDate;
+                return (
+                  <button key={d.dateStr} onClick={() => p.onSelectDate(d.dateStr)}
+                    className={`flex w-[72px] shrink-0 flex-col items-center rounded-2xl border py-3 transition cursor-pointer ${active ? 'border-[#2c1b12] bg-[#2c1b12] text-[#f6ebdd] shadow-lg shadow-[#2c1b12]/25' : 'border-[#e8dccb] bg-[#fbf8f3] text-primary-dark hover:border-accent'}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${active ? 'text-[#e9c49a]' : 'text-muted'}`}>
+                      {d.dayName === 'Today' ? (en ? 'Today' : 'আজ') : dt.toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <span className="font-display my-0.5 text-2xl font-semibold leading-none">{dt.getDate()}</span>
+                    <span className={`text-[10px] font-medium ${active ? 'text-[#c9a57e]' : 'text-muted'}`}>{dt.toLocaleDateString('en-US', { month: 'short' })}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => scroll(1)} aria-label="Next dates" className="absolute -right-2 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#e8dccb] bg-white text-primary-dark shadow-sm hover:border-accent sm:flex cursor-pointer">›</button>
           </div>
         </div>
 
-        {/* Time */}
+        {/* 2. Time */}
         <div className="lg:col-span-7">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-muted-light">
-              <ClockIcon className="h-3.5 w-3.5 text-accent" />
-              <span>{lang === 'en' ? 'Time Slot' : 'সময় স্লট'}</span>
-            </div>
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full ring-1 ring-emerald-600/10">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {counts.available} {lang === 'en' ? 'open' : 'খালি'}
-            </span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {slots.map((s) => {
-              const isSelected = s.id === selectedSlotId;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => onSelectSlot(s.id)}
-                  className={`flex shrink-0 flex-col items-center justify-center rounded-2xl px-4 py-2.5 min-w-[88px] transition-all duration-200 cursor-pointer ${
-                    isSelected
-                      ? 'bg-accent text-primary-dark font-semibold shadow-[0_4px_16px_rgba(176,122,74,0.3)]'
-                      : 'bg-background border border-border-light text-foreground hover:border-accent/40 hover:bg-surface-alt/40'
-                  }`}
-                >
-                  <span className="text-sm font-bold whitespace-nowrap">{s.start}</span>
-                  <span className={`text-[10px] font-medium ${isSelected ? 'text-primary-dark/70' : 'text-muted-light'}`}>
-                    {s.end}
-                  </span>
-                </button>
-              );
-            })}
+          <Step n={2} title={en ? 'Choose a time' : 'সময় বাছুন'} hint={en ? '90-minute seating' : '৯০ মিনিটের সিটিং'} />
+          <div className="space-y-3">
+            {groups.map((g) => (
+              <div key={g.key} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <span className="w-20 shrink-0 text-[11px] font-bold uppercase tracking-wider text-muted">{g.label}</span>
+                <div className="flex flex-wrap gap-2">
+                  {g.items.map((s) => {
+                    const active = s.id === p.selectedSlotId;
+                    return (
+                      <button key={s.id} onClick={() => p.onSelectSlot(s.id)}
+                        className={`rounded-xl border px-3.5 py-2 text-left transition cursor-pointer ${active ? 'border-accent bg-accent text-[#1e1610] shadow-md shadow-accent/30' : 'border-[#e8dccb] bg-[#fbf8f3] text-primary-dark hover:border-accent'}`}>
+                        <span className="block text-sm font-bold leading-tight">{fmt(s.start)}</span>
+                        <span className={`block text-[10px] ${active ? 'text-[#4b2e1e]' : 'text-muted'}`}>{en ? 'until' : 'পর্যন্ত'} {fmt(s.end)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Filters + Legend */}
-      <div className="flex flex-col gap-4 border-t border-border-light pt-5 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center rounded-2xl bg-background border border-border-light p-1">
-            <span className="px-2.5 text-muted-light"><UsersIcon className="h-4 w-4" /></span>
-            {[{ v: 'all' as const, l: lang === 'en' ? 'Any' : 'সব' }, { v: 2 as const, l: '2' }, { v: 4 as const, l: '4' }, { v: 6 as const, l: '6+' }].map((opt) => (
-              <button
-                key={String(opt.v)}
-                onClick={() => onSelectSeats(opt.v)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                  selectedSeats === opt.v ? 'bg-surface text-primary-dark shadow-sm' : 'text-muted hover:text-foreground'
-                }`}
-              >
-                {opt.l}
+      {/* 3. Filters + legend */}
+      <div className="border-t border-[#efe5d6] bg-[#fbf8f3] px-5 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-[11px] font-bold uppercase tracking-wider text-muted">{en ? 'Guests' : 'অতিথি'}</span>
+            {seatOpts.map((s) => (
+              <button key={String(s)} onClick={() => p.onSelectSeats(s)} className={pill(p.selectedSeats === s)}>
+                {s === 'all' ? (en ? 'Any' : 'যেকোনো') : s === 6 ? '6+' : s}
               </button>
             ))}
           </div>
-
-          <div className="inline-flex flex-wrap items-center rounded-2xl bg-background border border-border-light p-1">
-            <span className="px-2.5 text-muted-light"><MapPinIcon className="h-4 w-4" /></span>
-            <button
-              onClick={() => onSelectZone('all')}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                selectedZone === 'all' ? 'bg-surface text-primary-dark shadow-sm' : 'text-muted hover:text-foreground'
-              }`}
-            >
-              {lang === 'en' ? 'All Zones' : 'সব জোন'}
-            </button>
-            {zones.map((z) => (
-              <button
-                key={z}
-                onClick={() => onSelectZone(z)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                  selectedZone === z ? 'bg-surface text-primary-dark shadow-sm' : 'text-muted hover:text-foreground'
-                }`}
-              >
-                {z}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-[11px] font-bold uppercase tracking-wider text-muted">{en ? 'Area' : 'এলাকা'}</span>
+            {zoneOpts.map((z) => (
+              <button key={z} onClick={() => p.onSelectZone(z)} className={pill(p.selectedZone === z)}>
+                {z === 'all' ? (en ? 'All areas' : 'সব এলাকা') : z}
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
-          {[
-            { color: 'bg-emerald-500', ring: 'ring-emerald-500/20', label: lang === 'en' ? 'Available' : 'খালি', count: counts.available },
-            { color: 'bg-amber-500', ring: 'ring-amber-500/20', label: lang === 'en' ? 'Held' : 'হোল্ড', count: counts.held },
-            { color: 'bg-rose-500', ring: 'ring-rose-500/20', label: lang === 'en' ? 'Booked' : 'বুকড', count: counts.booked },
-          ].map((l) => (
-            <div key={l.label} className="flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${l.color} ring-4 ${l.ring}`} />
-              <span>{l.label} <span className="font-semibold text-foreground">{l.count}</span></span>
-            </div>
-          ))}
+          <div className="ml-auto flex items-center gap-4 text-xs text-muted">
+            {[['bg-emerald-500', en ? 'Available' : 'খালি', p.counts.available], ['bg-amber-500', en ? 'Held' : 'হোল্ড', p.counts.held], ['bg-rose-500', en ? 'Booked' : 'বুকড', p.counts.booked]].map(([c, l, n]) => (
+              <span key={String(l)} className="flex items-center gap-1.5"><span className={`h-2.5 w-2.5 rounded-full ${c}`} />{l} <b className="text-primary-dark">{n}</b></span>
+            ))}
+          </div>
         </div>
       </div>
     </section>

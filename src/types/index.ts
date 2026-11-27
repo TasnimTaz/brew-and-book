@@ -49,7 +49,7 @@ export interface MenuItem {
     flavor?: string[];
     topping?: string[];
     addon?: string[];
-    [key: string]: any;
+    [key: string]: string[] | undefined;
   } | null;
   tags?: string[];
   available: boolean;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Table, MenuCategory, MenuItem } from '@/types';
@@ -45,7 +45,7 @@ export default function AdminPage() {
     setTimeout(() => setStatusMessage((prev) => (prev === msg ? null : prev)), 2500);
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const authRes = await fetch('/api/admin/me');
@@ -62,9 +62,7 @@ export default function AdminPage() {
       if (menuRes.categories && menuRes.items) {
         setCategories(menuRes.categories);
         setItems(menuRes.items);
-        if (menuRes.categories.length > 0) {
-          setNewItemCatId(menuRes.categories[0].id);
-        }
+        setNewItemCatId((prev) => (prev ? prev : (menuRes.categories[0]?.id ?? prev)));
       }
       if (tablesRes.tables) {
         setTables(tablesRes.tables);
@@ -74,11 +72,14 @@ export default function AdminPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadData]);
 
   const handleLogout = async () => {
     await fetch('/api/admin/login', { method: 'DELETE' });

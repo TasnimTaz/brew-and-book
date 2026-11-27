@@ -11,7 +11,7 @@ export async function PATCH(
     const catId = parseInt(id, 10);
 
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let counter = 1;
 
     for (const field of ['name', 'nameBn', 'sortOrder', 'active']) {
@@ -42,8 +42,9 @@ export async function PATCH(
     }
 
     return NextResponse.json({ category: result.rows[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PATCH /api/menu/categories/[id] failed', error);
-    return NextResponse.json({ error: error.message || 'Failed to update category' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to update category';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

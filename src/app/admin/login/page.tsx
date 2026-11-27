@@ -30,8 +30,8 @@ export default function AdminLoginPage() {
       }
 
       router.push('/admin');
-    } catch (err: any) {
-      setError(err.message || 'Invalid credentials');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }

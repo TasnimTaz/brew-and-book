@@ -11,7 +11,7 @@ export async function PATCH(
     const tableId = parseInt(id, 10);
 
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let counter = 1;
 
     const fields = ['code', 'seats', 'zone', 'x', 'y', 'shape', 'width', 'height', 'photoUrl', 'active'];
@@ -44,9 +44,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ table: result.rows[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PATCH /api/tables/[id] failed', error);
-    return NextResponse.json({ error: error.message || 'Failed to update table' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to update table';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -68,8 +69,9 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: 'Table deactivated', table: result.rows[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('DELETE /api/tables/[id] failed', error);
-    return NextResponse.json({ error: error.message || 'Failed to delete table' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to delete table';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

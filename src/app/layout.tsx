@@ -14,17 +14,12 @@ const notoSansBengali = Noto_Sans_Bengali({
   display: "swap",
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  display: "swap",
-});
+const display = Playfair_Display({ variable: "--font-display", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Brew & Book | Premium Coffee & Table Reservations",
+  title: "Brew & Book",
   description:
-    "Reserve your perfect table, pre-order artisanal coffee and cuisine, and enjoy a seamless cafe experience in Dhaka. Powered by Brew & Book.",
-  keywords: ["coffee shop", "table booking", "Dhaka cafe", "pre-order", "Brew & Book"],
+    "Coffee shop table booking, pre-ordering, and payments for Bangladesh.",
 };
 
 export default function RootLayout({
@@ -33,9 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en">
       <body
-        className={`${notoSans.variable} ${notoSansBengali.variable} ${playfair.variable} antialiased bg-background text-foreground`}
+        className={`${notoSans.variable} ${notoSansBengali.variable} ${display.variable} antialiased`}
       >
         {children}
       </body>

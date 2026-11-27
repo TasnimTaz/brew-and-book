@@ -11,7 +11,7 @@ export async function PATCH(
     const itemId = parseInt(id, 10);
 
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let counter = 1;
 
     const fields = ['categoryId', 'name', 'nameBn', 'description', 'priceBdt', 'imageUrl', 'options', 'tags', 'available'];
@@ -49,9 +49,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ item: result.rows[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PATCH /api/menu/items/[id] failed', error);
-    return NextResponse.json({ error: error.message || 'Failed to update menu item' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to update menu item';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -74,8 +75,9 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: 'Menu item deleted', item: result.rows[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('DELETE /api/menu/items/[id] failed', error);
-    return NextResponse.json({ error: error.message || 'Failed to delete menu item' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to delete menu item';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

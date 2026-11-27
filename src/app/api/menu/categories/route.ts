@@ -18,8 +18,9 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({ category: result.rows[0] }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST /api/menu/categories failed', error);
-    return NextResponse.json({ error: error.message || 'Failed to create category' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to create category';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

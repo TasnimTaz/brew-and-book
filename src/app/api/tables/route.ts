@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
        ORDER BY code ASC`,
     );
     return NextResponse.json({ tables: result.rows });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('GET /api/tables failed', error);
     return NextResponse.json({ error: 'Failed to fetch tables' }, { status: 500 });
   }
@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({ table: result.rows[0] }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST /api/tables failed', error);
-    return NextResponse.json({ error: error.message || 'Failed to create table' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to create table';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
