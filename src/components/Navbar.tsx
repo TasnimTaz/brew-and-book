@@ -13,6 +13,19 @@ export default function Navbar({ lang, onToggleLang, cartCount, cartTotal, onOpe
     { href: '/book', t: en ? 'Book a Table' : 'টেবিল বুক' },
     { href: '/#how', t: en ? 'How it works' : 'কীভাবে কাজ করে' },
   ];
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(href, window.location.origin);
+    if (url.pathname !== window.location.pathname || !url.hash) return;
+    const el = document.querySelector(url.hash);
+    if (!el) return;
+    e.preventDefault();
+    const nav = document.querySelector('header');
+    const offset = (nav?.getBoundingClientRect().height || 72) + 8;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    window.history.replaceState(null, '', url.hash);
+  };
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#140d09]/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between px-5 py-3.5 lg:px-8">
@@ -22,7 +35,7 @@ export default function Navbar({ lang, onToggleLang, cartCount, cartTotal, onOpe
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className="text-sm font-medium text-[#d9c7b3] transition-colors hover:text-white">{l.t}</Link>
+            <Link key={l.href} href={l.href} onClick={(e) => handleNavClick(e, l.href)} className="text-sm font-medium text-[#d9c7b3] transition-colors hover:text-white">{l.t}</Link>
           ))}
         </nav>
         <div className="flex items-center gap-2">
