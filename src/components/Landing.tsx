@@ -188,17 +188,35 @@ export function HowItWorks({ lang }: { lang: 'en' | 'bn' }) {
     ? [['01', 'Pick a time & table', 'Choose a date and slot, then tap any green table on the live floor plan.'], ['02', 'Pre-order & pay', 'Add drinks and food, pay online with bKash, Nagad, card, or at the shop.'], ['03', 'Get your token', 'Receive a token with table no., serial no., your name and QR for easy check-in.']]
     : [['০১', 'সময় ও টেবিল বাছুন', 'তারিখ ও স্লট বেছে লাইভ ফ্লোর প্ল্যানে সবুজ টেবিলে ট্যাপ করুন।'], ['০২', 'অর্ডার ও পেমেন্ট', 'খাবার যোগ করুন, বিকাশ, নগদ, কার্ড বা শপে পেমেন্ট করুন।'], ['০৩', 'টোকেন পান', 'টেবিল নম্বর, সিরিয়াল, নাম ও QR সহ টোকেন পাবেন।']];
   return (
-    <section id="how" className="bg-[#140d09] py-20 scroll-mt-24 lg:scroll-mt-28 lg:min-h-[calc(100svh-72px)] lg:flex lg:items-center">
+    <section id="how" className="bg-[#140d09] py-20 scroll-mt-24 lg:scroll-mt-28">
       <div className="mx-auto w-full max-w-[1280px] px-5 lg:px-8">
-        <h2 className="font-display text-4xl font-semibold text-[#f6ebdd] sm:text-5xl">{en ? <>Three simple steps to <span className="text-accent">your seat</span></> : <>তিন ধাপে <span className="text-accent">আপনার আসন</span></>}</h2>
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {steps.map(([n, t, d]) => (
-            <div key={n} className="rounded-2xl border border-white/10 bg-white/[0.03] p-7">
-              <span className="font-display text-4xl font-semibold text-accent/80">{n}</span>
-              <h3 className="mt-4 text-lg font-semibold text-[#f6ebdd]">{t}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#a8957f]">{d}</p>
-            </div>
-          ))}
+        <div className="grid items-center gap-10 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">{en ? 'Our space' : 'আমাদের জায়গা'}</p>
+            <h2 className="font-display mt-3 text-4xl font-semibold text-[#f6ebdd] sm:text-5xl">{en ? 'A place to slow down' : 'একটু থেমে বসার জায়গা'}</h2>
+            <p className="mt-5 text-sm leading-relaxed text-[#a8957f]">{en ? 'Window lounge, quiet study corner, family booths and a garden terrace. See every seat before you arrive and book the one you love.' : 'উইন্ডো লাউঞ্জ, শান্ত স্টাডি কর্নার, ফ্যামিলি বুথ ও গার্ডেন টেরেস। আসার আগেই পছন্দের আসনটি বুক করুন।'}</p>
+            <a href="/book" className="mt-7 inline-block rounded-full bg-accent px-6 py-3 text-sm font-bold text-[#1e1610] transition hover:brightness-110">{en ? 'See the floor plan' : 'ফ্লোর প্ল্যান দেখুন'}</a>
+          </div>
+          <div className="grid grid-cols-2 gap-4 lg:col-span-3">
+            {[PHOTOS.interior1, PHOTOS.interior2].map((src, i) => (
+              <div key={i} className={`overflow-hidden rounded-2xl border border-white/10 bg-[#241710] ${i === 1 ? 'mt-8' : ''}`}>
+                <Photo src={src} alt={en ? 'Cafe interior' : 'ক্যাফের ভেতরের দৃশ্য'} className="h-64 w-full object-cover transition duration-500 hover:scale-105 sm:h-80" fallback={<div className="flex h-64 items-center justify-center sm:h-80"><CupArt className="h-32 w-32 opacity-70" /></div>} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-16 border-t border-white/10 pt-14">
+          <h2 className="font-display text-4xl font-semibold text-[#f6ebdd] sm:text-5xl">{en ? <>Three simple steps to <span className="text-accent">your seat</span></> : <>তিন ধাপে <span className="text-accent">আপনার আসন</span></>}</h2>
+          <div className="mt-12 grid gap-5 md:grid-cols-3">
+            {steps.map(([n, t, d]) => (
+              <div key={n} className="rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+                <span className="font-display text-4xl font-semibold text-accent/80">{n}</span>
+                <h3 className="mt-4 text-lg font-semibold text-[#f6ebdd]">{t}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[#a8957f]">{d}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
