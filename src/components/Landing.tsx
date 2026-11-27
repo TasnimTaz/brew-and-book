@@ -188,7 +188,7 @@ export function HowItWorks({ lang }: { lang: 'en' | 'bn' }) {
     ? [['01', 'Pick a time & table', 'Choose a date and slot, then tap any green table on the live floor plan.'], ['02', 'Pre-order & pay', 'Add drinks and food, pay online with bKash, Nagad, card, or at the shop.'], ['03', 'Get your token', 'Receive a token with table no., serial no., your name and QR for easy check-in.']]
     : [['০১', 'সময় ও টেবিল বাছুন', 'তারিখ ও স্লট বেছে লাইভ ফ্লোর প্ল্যানে সবুজ টেবিলে ট্যাপ করুন।'], ['০২', 'অর্ডার ও পেমেন্ট', 'খাবার যোগ করুন, বিকাশ, নগদ, কার্ড বা শপে পেমেন্ট করুন।'], ['০৩', 'টোকেন পান', 'টেবিল নম্বর, সিরিয়াল, নাম ও QR সহ টোকেন পাবেন।']];
   return (
-    <section id="how" className="bg-[#140d09] py-20 scroll-mt-24 lg:scroll-mt-28">
+    <section id="how" className="bg-[#140d09] py-14 sm:py-16 lg:py-20 scroll-mt-20 sm:scroll-mt-24">
       <div className="mx-auto w-full max-w-[1280px] px-5 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-5">
           <div className="lg:col-span-2">
@@ -206,9 +206,9 @@ export function HowItWorks({ lang }: { lang: 'en' | 'bn' }) {
           </div>
         </div>
 
-        <div className="mt-16 border-t border-white/10 pt-14">
+        <div className="mt-12 sm:mt-14 border-t border-white/10 pt-10 sm:pt-12">
           <h2 className="font-display text-4xl font-semibold text-[#f6ebdd] sm:text-5xl">{en ? <>Three simple steps to <span className="text-accent">your seat</span></> : <>তিন ধাপে <span className="text-accent">আপনার আসন</span></>}</h2>
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
+          <div className="mt-8 sm:mt-10 grid gap-5 md:grid-cols-3">
             {steps.map(([n, t, d]) => (
               <div key={n} className="rounded-2xl border border-white/10 bg-white/[0.03] p-7">
                 <span className="font-display text-4xl font-semibold text-accent/80">{n}</span>
