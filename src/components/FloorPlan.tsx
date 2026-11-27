@@ -13,14 +13,6 @@ interface FloorPlanProps {
   lang: 'en' | 'bn';
 }
 
-// Collision-free layout. Chairs sit above/below tables only, so every table has >= 30px clearance.
-const LAYOUT: Record<string, { x: number; y: number; width?: number; height?: number }> = {
-  T01: { x: 44, y: 66 }, T02: { x: 144, y: 66 }, T03: { x: 244, y: 66 },
-  T07: { x: 360, y: 62 }, T14: { x: 480, y: 66 },
-  T04: { x: 44, y: 186 }, T05: { x: 174, y: 186 }, T06: { x: 304, y: 186 }, T13: { x: 434, y: 186 },
-  T08: { x: 44, y: 308, width: 140, height: 64 }, T09: { x: 214, y: 308, width: 140, height: 64 }, T15: { x: 384, y: 308, width: 140, height: 64 },
-  T10: { x: 56, y: 412 }, T11: { x: 140, y: 412 }, T12: { x: 240, y: 406 },
-};
 
 const chairColors = (status: string, selected: boolean) => {
   if (selected) return { fill: '#5c3d2e', stroke: '#c68b59' };
@@ -373,7 +365,7 @@ export default function FloorPlan({
 
             {/* === 7. INTERACTIVE TABLES === */}
             {tables.map((rawTable) => {
-              const table = { ...rawTable, ...(LAYOUT[rawTable.code] || {}) };
+              const table = rawTable;
               const isSelected = selectedTable?.id === table.id;
               const isHovered = hoveredTable?.id === table.id;
               const isFiltered = isTableFilteredOut(table);

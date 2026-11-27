@@ -28,6 +28,8 @@ export default function AdminPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState('');
   const [newCatNameBn, setNewCatNameBn] = useState('');
+  const [isAddTableOpen, setIsAddTableOpen] = useState(false);
+  const [newTable, setNewTable] = useState({ code:'', seats:2, zone:'Indoor', x:100, y:100, shape:'circle' as 'circle'|'rect', width:70, height:70, photoUrl:'' });
 
   // Dragging state for Floor Plan Editor
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -186,6 +188,45 @@ export default function AdminPage() {
     }
   };
 
+  const uploadImage = async (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    return data.url as string;
+  };
+
+  const handleCreateTable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/tables', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        ...newTable, code: newTable.code.trim().toUpperCase(), zone: newTable.zone.trim(), photoUrl: newTable.photoUrl || null,
+      })});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setIsAddTableOpen(false);
+      setNewTable({ code:'', seats:2, zone:'Indoor', x:100, y:100, shape:'circle', width:70, height:70, photoUrl:'' });
+      notify('Table added');
+      loadData();
+    } catch (err: unknown) { alert(err instanceof Error ? err.message : 'Failed to add table'); }
+  };
+
+  const handleTablePatch = async (id: number, payload: Record<string, unknown>, msg: string) => {
+    try {
+      const res = await fetch(`/api/tables/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      notify(msg);
+      loadData();
+    } catch (err: unknown) { alert(err instanceof Error ? err.message : 'Failed to update table'); }
+  };
+
+  const handleDeleteTable = async (table: Table) => {
+    if (!confirm(`Deactivate table ${table.code}?`)) return;
+    await handleTablePatch(table.id, { active: false }, `Table ${table.code} deactivated`);
+  };
+
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -221,22 +262,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleToggleTableActive = async (table: Table) => {
-    const updatedActive = !table.active;
-    setTables((prev) =>
-      prev.map((t) => (t.id === table.id ? { ...t, active: updatedActive } : t))
-    );
-    try {
-      await fetch(`/api/tables/${table.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: updatedActive }),
-      });
-      notify(`Table ${table.code} ${updatedActive ? 'enabled' : 'disabled'}`);
-    } catch {
-      loadData();
-    }
-  };
 
   const handleSaveTableCoords = async (tableId: number, x: number, y: number, seats: number) => {
     try {
@@ -600,26 +625,18 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB 2: DRAG-AND-DROP FLOOR PLAN EDITOR */}
+        {/* TAB 2: TABLES */}
         {activeTab === 'tables' && (
           <div className="space-y-5">
+            <div className="flex justify-between items-center gap-3">
+              <div><h3 className="font-bold text-base text-primary-dark">Table Management</h3><p className="text-xs text-muted">Add, edit, activate/deactivate tables and reposition on floor plan.</p></div>
+              <button onClick={()=>setIsAddTableOpen(true)} className="flex items-center gap-1.5 rounded-xl bg-primary-dark px-4 py-2 text-xs font-bold text-white hover:bg-primary cursor-pointer"><PlusIcon className="h-4 w-4 text-accent"/>Add Table</button>
+            </div>
             <div className="rounded-2xl border border-border/80 bg-surface p-4 sm:p-5 shadow-xs">
               <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <h3 className="font-bold text-base text-primary-dark">
-                    Drag-and-Drop Floor Plan Editor
-                  </h3>
-                  <p className="text-xs text-muted">
-                    Drag any table directly on the canvas to reposition it — changes auto-save to the database.
-                  </p>
-                </div>
-                {editingTable && (
-                  <span className="rounded-xl bg-primary-dark px-3 py-1.5 text-xs font-bold text-white">
-                    Selected: {editingTable.code} (x:{editingTable.x}, y:{editingTable.y})
-                  </span>
-                )}
+                <div><h3 className="font-bold text-base text-primary-dark">Drag-and-Drop Floor Plan Editor</h3><p className="text-xs text-muted">Drag any table on the canvas to reposition it ? changes auto-save to the database.</p></div>
+                {editingTable && <span className="rounded-xl bg-primary-dark px-3 py-1.5 text-xs font-bold text-white">Selected: {editingTable.code} (x:{editingTable.x}, y:{editingTable.y})</span>}
               </div>
-
               <div className="relative mx-auto w-full max-w-3xl overflow-x-auto rounded-xl border border-border bg-[#f7f3ed] p-2">
                 <svg
                   ref={svgRef}
@@ -776,163 +793,136 @@ export default function AdminPage() {
               </div>
             )}
 
-            <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-xs">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-border bg-background/60 font-bold uppercase tracking-wider text-muted">
-                  <tr>
-                    <th className="px-4 py-3.5">Code</th>
-                    <th className="px-4 py-3.5">Capacity</th>
-                    <th className="px-4 py-3.5">Zone</th>
-                    <th className="px-4 py-3.5">Position</th>
-                    <th className="px-4 py-3.5">Status</th>
-                    <th className="px-4 py-3.5 text-right">Edit</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {tables.map((table) => (
-                    <tr key={table.id} className="hover:bg-background/40 transition-colors">
-                      <td className="px-4 py-3 font-extrabold text-primary-dark">{table.code}</td>
-                      <td className="px-4 py-3">{table.seats} Seats</td>
-                      <td className="px-4 py-3 font-medium">{table.zone}</td>
-                      <td className="px-4 py-3 font-mono text-muted">
-                        ({table.x}, {table.y})
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleToggleTableActive(table)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold cursor-pointer ${
-                            table.active
-                              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                              table.active ? 'bg-emerald-600' : 'bg-slate-400'
-                            }`}
-                          />
-                          {table.active ? 'Active' : 'Disabled'}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => setEditingTable(table)}
-                          className="rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-primary-dark hover:bg-surface-alt/50 cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+                        <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-xs">
 
-        {/* Add Menu Item Modal */}
-        {isAddItemOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-            <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <h3 className="font-bold text-base text-primary-dark">Add New Menu Item</h3>
-                <button
-                  onClick={() => setIsAddItemOpen(false)}
-                  className="rounded-lg p-1 text-muted hover:text-foreground cursor-pointer"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
+              <table className="w-full text-left text-xs">
+
+                <thead className="border-b border-border bg-background/60 font-bold uppercase tracking-wider text-muted">
+
+                  <tr><th className="px-4 py-3.5">Table</th><th className="px-4 py-3.5">Zone</th><th className="px-4 py-3.5">Seats</th><th className="px-4 py-3.5">Shape</th><th className="px-4 py-3.5">Pos</th><th className="px-4 py-3.5">Active</th><th className="px-4 py-3.5 text-right">Actions</th></tr>
+
+                </thead>
+
+                <tbody className="divide-y divide-border/60">
+
+                  {tables.map((t) => (
+
+                    <tr key={t.id} className="hover:bg-background/40">
+
+                      <td className="px-4 py-3 font-bold text-primary-dark"><div className="flex items-center gap-2">{t.photoUrl ? <img src={t.photoUrl} alt={t.code} className="h-8 w-8 rounded object-cover border" /> : <div className="h-8 w-8 rounded bg-surface-alt border" />}{t.code}</div></td>
+
+                      <td className="px-4 py-3 text-muted">{t.zone}</td>
+
+                      <td className="px-4 py-3 text-muted">{t.seats}</td>
+
+                      <td className="px-4 py-3 text-muted">{t.shape}</td>
+
+                      <td className="px-4 py-3 font-mono text-muted">{t.x},{t.y}</td>
+
+                      <td className="px-4 py-3"><button onClick={()=>handleTablePatch(t.id,{active:!t.active},`${t.code} ${!t.active?'activated':'deactivated'}`)} className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider cursor-pointer ${t.active?'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20':'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'}`}>{t.active?'Yes':'No'}</button></td>
+
+                      <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
+
+                        <button onClick={()=>{const code=prompt('Code',t.code); if(!code) return; const seats=Number(prompt('Seats',String(t.seats))||t.seats); const zone=prompt('Zone',t.zone)||t.zone; handleTablePatch(t.id,{code:code.toUpperCase(),seats,zone},`Updated ${code}`);}} className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold hover:bg-surface-alt/50 cursor-pointer">Edit</button>
+
+                        <button onClick={()=>handleDeleteTable(t)} className="rounded-lg p-1.5 text-muted hover:text-rose-600 hover:bg-rose-50 cursor-pointer"><TrashIcon className="h-4 w-4"/></button>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        )}
+            {isAddTableOpen && (
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary-dark/40 p-4 backdrop-blur-sm">
+
+          <div className="w-full max-w-lg rounded-3xl bg-surface p-6 shadow-2xl">
+
+            <div className="flex items-center justify-between mb-4"><h3 className="font-display text-xl font-bold text-primary-dark">Add Table</h3><button onClick={()=>setIsAddTableOpen(false)} className="rounded-lg p-1.5 text-muted hover:text-foreground cursor-pointer"><XIcon className="h-5 w-5"/></button></div>
+
+            <form onSubmit={handleCreateTable} className="space-y-3 text-sm">
+
+              <div className="grid grid-cols-2 gap-3">
+
+                <input required placeholder="Code (T16)" value={newTable.code} onChange={e=>setNewTable({...newTable,code:e.target.value})} className="rounded-xl border border-border bg-background px-3 py-2.5" />
+
+                <input required type="number" min={1} placeholder="Seats" value={newTable.seats} onChange={e=>setNewTable({...newTable,seats:Number(e.target.value)})} className="rounded-xl border border-border bg-background px-3 py-2.5" />
+
+                <input required placeholder="Zone" value={newTable.zone} onChange={e=>setNewTable({...newTable,zone:e.target.value})} className="rounded-xl border border-border bg-background px-3 py-2.5" />
+
+                <select value={newTable.shape} onChange={e=>{const shape=e.target.value as 'circle'|'rect'; setNewTable({...newTable,shape, ...(shape==='circle'?{width:70,height:70}:{width:100,height:80})});}} className="rounded-xl border border-border bg-background px-3 py-2.5"><option value="circle">circle</option><option value="rect">rect</option></select>
+
+                <input type="number" placeholder="X" value={newTable.x} onChange={e=>setNewTable({...newTable,x:Number(e.target.value)})} className="rounded-xl border border-border bg-background px-3 py-2.5" />
+
+                <input type="number" placeholder="Y" value={newTable.y} onChange={e=>setNewTable({...newTable,y:Number(e.target.value)})} className="rounded-xl border border-border bg-background px-3 py-2.5" />
+
               </div>
 
-              <form onSubmit={handleCreateItem} className="mt-4 space-y-3">
-                <div>
-                  <label className="text-[11px] font-bold uppercase text-muted">Item Name (English)</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Vanilla Bean Frappe"
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase text-muted">Bengali Name (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. ভ্যানিলা বিন ফ্র্যাপে"
-                    value={newItemNameBn}
-                    onChange={(e) => setNewItemNameBn(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-bold uppercase text-muted">Category</label>
-                    <select
-                      value={newItemCatId}
-                      onChange={(e) => setNewItemCatId(parseInt(e.target.value, 10))}
-                      className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs"
-                    >
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold uppercase text-muted">Price (BDT)</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={newItemPrice}
-                      onChange={(e) => setNewItemPrice(parseInt(e.target.value, 10) || 0)}
-                      className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase text-muted">Tags (comma-separated)</label>
-                  <input
-                    type="text"
-                    placeholder="hot, veg, bestseller"
-                    value={newItemTags}
-                    onChange={(e) => setNewItemTags(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase text-muted">Description</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Flavor notes..."
-                    value={newItemDesc}
-                    onChange={(e) => setNewItemDesc(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs"
-                  />
-                </div>
-                <div className="mt-5 flex justify-end gap-2 border-t border-border pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddItemOpen(false)}
-                    className="rounded-xl px-3.5 py-2 text-xs font-semibold text-muted hover:text-foreground cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-primary-dark px-4 py-2 text-xs font-bold text-white hover:bg-primary cursor-pointer"
-                  >
-                    Save Item
-                  </button>
-                </div>
-              </form>
-            </div>
+              <input type="file" accept="image/*" onChange={async e=>{const f=e.target.files?.[0]; if(!f) return; try{setNewTable({...newTable,photoUrl:await uploadImage(f)}); notify('Image uploaded');}catch(err){alert(err instanceof Error?err.message:'Upload failed');}}} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+
+              <input placeholder="Photo URL (optional)" value={newTable.photoUrl} onChange={e=>setNewTable({...newTable,photoUrl:e.target.value})} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" />
+
+              {newTable.photoUrl && <img src={newTable.photoUrl} alt="Table" className="h-20 w-20 rounded-lg object-cover border" />}
+
+              <div className="flex gap-3 pt-2"><button type="button" onClick={()=>setIsAddTableOpen(false)} className="flex-1 rounded-xl border border-border py-2.5 font-semibold cursor-pointer">Cancel</button><button type="submit" className="flex-1 rounded-xl bg-primary-dark text-white py-2.5 font-bold cursor-pointer">Create Table</button></div>
+
+            </form>
+
           </div>
-        )}
-      </main>
+
+        </div>
+
+      )}
+
+      {isAddItemOpen && (
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary-dark/40 p-4 backdrop-blur-sm">
+
+          <div className="w-full max-w-lg rounded-3xl bg-surface p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+
+            <div className="flex items-center justify-between mb-4"><h3 className="font-display text-xl font-bold text-primary-dark">Add Menu Item</h3><button onClick={()=>setIsAddItemOpen(false)} className="rounded-lg p-1.5 text-muted hover:text-foreground cursor-pointer"><XIcon className="h-5 w-5"/></button></div>
+
+            <form onSubmit={handleCreateItem} className="space-y-3 text-sm">
+
+              <input required placeholder="Name (EN)" value={newItemName} onChange={e=>setNewItemName(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" />
+
+              <input placeholder="Name (BN)" value={newItemNameBn} onChange={e=>setNewItemNameBn(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" />
+
+              <select value={newItemCatId} onChange={e=>setNewItemCatId(Number(e.target.value))} className="w-full rounded-xl border border-border bg-background px-3 py-2.5">{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
+
+              <input required type="number" min={0} placeholder="Price BDT" value={newItemPrice} onChange={e=>setNewItemPrice(Number(e.target.value))} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" />
+
+              <textarea placeholder="Description" value={newItemDesc} onChange={e=>setNewItemDesc(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" rows={2} />
+
+              <input type="file" accept="image/*" onChange={async e=>{const f=e.target.files?.[0]; if(!f) return; try{setNewItemImageUrl(await uploadImage(f)); notify('Image uploaded');}catch(err){alert(err instanceof Error?err.message:'Upload failed');}}} className="w-full rounded-xl border border-border bg-background px-3 py-2" />
+
+              <input placeholder="Image URL (optional)" value={newItemImageUrl} onChange={e=>setNewItemImageUrl(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" />
+
+              {newItemImageUrl && <img src={newItemImageUrl} alt="Preview" className="h-20 w-20 rounded-lg object-cover border" />}
+
+              <input placeholder="Tags (comma-separated)" value={newItemTags} onChange={e=>setNewItemTags(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" />
+
+              <div className="flex gap-3 pt-2"><button type="button" onClick={()=>setIsAddItemOpen(false)} className="flex-1 rounded-xl border border-border py-2.5 font-semibold cursor-pointer">Cancel</button><button type="submit" className="flex-1 rounded-xl bg-primary-dark text-white py-2.5 font-bold cursor-pointer">Add Item</button></div>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      )}
+
+</main>
     </div>
   );
 }
