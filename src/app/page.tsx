@@ -68,9 +68,10 @@ export default function Home() {
     <div className="min-h-screen bg-[#140d09] text-foreground flex flex-col">
       <Navbar lang={lang} onToggleLang={() => setLang(p => p === 'en' ? 'bn' : 'en')} cartCount={totalCartCount} cartTotal={totalCartAmount} onOpenCart={() => setIsCartModalOpen(true)} />
       <Hero lang={lang} tableCount={tables.length} itemCount={menuItems.length} availableCount={availableCount} previewTable={tables.find(t => (t.status || 'AVAILABLE') === 'AVAILABLE') || tables[0] || null} selectedDate={selectedDate} selectedSlotLabel={activeSlot?.label || ''} />
+      <div className="h-16 sm:h-20 lg:h-24 bg-[#140d09]" aria-hidden="true" />
+      <HowItWorks lang={lang} />
       <MenuShowcase lang={lang} categories={categories} items={menuItems} onAdd={handleAddToCart} />
       <OurSpace lang={lang} />
-      <HowItWorks lang={lang} />
       <CartBar cart={cart} selectedTable={null} selectedDate={selectedDate} selectedSlot={activeSlot} onUpdateQty={(id,d)=>setCart(p=>p.map(c=>c.id===id?{...c,quantity:c.quantity+d}:c).filter(c=>c.quantity>0))} onRemoveItem={(id)=>setCart(p=>p.filter(c=>c.id!==id))} onClearCart={()=>{setCart([]); setIsCartModalOpen(false);}} lang={lang} isOpen={isCartModalOpen} onToggleOpen={()=>setIsCartModalOpen(p=>!p)} onCheckout={()=>{ router.push('/book'); }} />
       <SiteFooter lang={lang} />
     </div>
