@@ -31,7 +31,7 @@ export default function Navbar({ lang, onToggleLang, cartCount, cartTotal, onOpe
           </button>
           <button onClick={onOpenCart} className="relative flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-xs font-bold text-[#1e1610] transition hover:brightness-110 cursor-pointer">
             <ShoppingBagIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">{cartCount > 0 ? `BDT ${cartTotal}` : en ? 'My Order' : 'অর্ডার'}</span>
+            <span className="hidden sm:inline">{cartCount > 0 ? `${en ? 'BDT' : '?'} ${cartTotal}` : en ? 'My Order' : 'অর্ডার'}</span>
             {cartCount > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#1e1610] px-1 text-[10px] text-accent">{cartCount}</span>}
           </button>
         </div>
