@@ -241,7 +241,15 @@ export default function Home() {
         </div>
       )}
 
-      <Hero lang={lang} tableCount={tables.length} itemCount={menuItems.length} />
+      <Hero
+        lang={lang}
+        tableCount={tables.length}
+        itemCount={menuItems.length}
+        availableCount={counts.available}
+        previewTable={selectedTable || tables.find((t) => (t.status || 'AVAILABLE') === 'AVAILABLE') || tables[0] || null}
+        selectedDate={selectedDate}
+        selectedSlotLabel={activeSlot?.label || ''}
+      />
       <MenuShowcase lang={lang} categories={categories} items={menuItems} onAdd={(i) => handleAddToCart(i)} />
 
       <OurSpace lang={lang} />

@@ -24,7 +24,8 @@ export function CupArt({ className = '' }: { className?: string }) {
       ))}
       <path d="M72 120 H248 L228 322 Q226 338 210 338 H110 Q94 338 92 322 Z" fill="url(#cupBody)" />
       <path d="M80 190 H240 L234 262 H86 Z" fill="url(#sleeve)" />
-      <text x="160" y="233" textAnchor="middle" fill="#f0d9bd" fontSize="22" fontFamily="serif" fontWeight="700" letterSpacing="3">BREW&amp;BOOK</text>
+      <text x="160" y="224" textAnchor="middle" fill="#f0d9bd" fontSize="15" fontFamily="serif" fontWeight="700" letterSpacing="2.5">BREW &amp; BOOK</text>
+      <text x="160" y="240" textAnchor="middle" fill="#e8c9a0" fontSize="7.5" fontFamily="sans-serif" fontWeight="600" letterSpacing="2" opacity="0.85">COFFEE HOUSE</text>
       <rect x="62" y="104" width="196" height="22" rx="11" fill="#fff7ec" />
       <rect x="70" y="96" width="180" height="14" rx="7" fill="#3c2a1e" />
       {[[40, 300, 18], [280, 280, 14], [262, 70, 12], [34, 140, 10]].map(([x, y, r], i) => (
@@ -34,53 +35,86 @@ export function CupArt({ className = '' }: { className?: string }) {
   );
 }
 
-export function Hero({ lang, tableCount, itemCount }: { lang: 'en' | 'bn'; tableCount: number; itemCount: number }) {
+export function Hero({
+  lang,
+  tableCount,
+  itemCount,
+  availableCount,
+  previewTable,
+  selectedDate,
+  selectedSlotLabel,
+}: {
+  lang: 'en' | 'bn';
+  tableCount: number;
+  itemCount: number;
+  availableCount: number;
+  previewTable: { code: string; seats: number; zone?: string; status?: string } | null;
+  selectedDate: string;
+  selectedSlotLabel: string;
+}) {
   const en = lang === 'en';
+  const table = previewTable || { code: 'T05', seats: 4, zone: 'Window side', status: 'AVAILABLE' };
+  const status = table.status || 'AVAILABLE';
+  const statusLabel = status === 'AVAILABLE' ? (en ? 'Available' : '????') : status === 'HELD' ? (en ? 'Held' : '?????') : (en ? 'Booked' : '????');
+  const statusClass = status === 'AVAILABLE' ? 'bg-emerald-400/15 text-emerald-400' : status === 'HELD' ? 'bg-amber-400/15 text-amber-300' : 'bg-rose-400/15 text-rose-300';
+  const dotClass = status === 'AVAILABLE' ? 'bg-emerald-400' : status === 'HELD' ? 'bg-amber-300' : 'bg-rose-300';
+  const dateLabel = (() => {
+    const d = new Date(`${selectedDate}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return selectedDate;
+    return d.toLocaleDateString(en ? 'en-US' : 'bn-BD', { day: 'numeric', month: 'short' });
+  })();
+  const token = `BB-${(selectedDate || '').replace(/-/g, '').slice(0, 8) || 'LIVE'}-${table.code}`;
+
   return (
     <section id="home" className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,#3a2415_0%,#140d09_60%)]">
       <div className="mx-auto grid max-w-[1280px] items-center gap-10 px-5 pb-20 pt-14 lg:grid-cols-2 lg:px-8 lg:pb-28 lg:pt-20">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-accent">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />{en ? 'Live table availability' : 'লাইভ টেবিল স্ট্যাটাস'}
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />{en ? 'Live table availability' : '???? ????? ??????'}
           </span>
           <h1 className="font-display mt-5 text-5xl font-semibold leading-[1.05] text-[#f6ebdd] sm:text-6xl lg:text-7xl">
-            {en ? <>Reserve Your Table.<br /><span className="text-accent">Savor Every Sip.</span></> : <>আপনার টেবিল বুক করুন।<br /><span className="text-accent">কফির স্বাদ নিন প্রাণ ভরে।</span></>}
+            {en ? <>Reserve Your Table.<br /><span className="text-accent">Savor Every Sip.</span></> : <>????? ????? ??????? ?????<br /><span className="text-accent">??????? ?????? ????? ?????</span></>}
           </h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-[#bba992]">
-            {en ? 'See the café floor in real time, pick the exact table you like, browse the menu and pay with bKash, Nagad or card, before you even leave home.'
-                : 'ঘরে বসেই ক্যাফের ফ্লোর দেখুন, পছন্দের টেবিল বেছে নিন, মেনু দেখুন এবং বিকাশ, নগদ বা কার্ডে পেমেন্ট করুন।'}
+            {en ? 'See the cafe floor in real time, pick the exact table you like, browse the menu and book with OTP confirmation before you arrive.'
+                : '???? ???? ??? ?????? ???? ??????? ????? ???? ?????, ??????? ????? ???? ???, ???? ????? ??? OTP ??????? ??? ??? ?????'}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#book" className="rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-[#1e1610] shadow-lg shadow-accent/20 transition hover:brightness-110">{en ? 'Reserve a Table' : 'টেবিল বুক করুন'}</a>
-            <a href="#menu" className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-[#f6ebdd] transition hover:border-accent hover:text-accent">{en ? 'Explore Menu' : 'মেনু দেখুন'}</a>
+            <a href="#book" className="rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-[#1e1610] shadow-lg shadow-accent/20 transition hover:brightness-110">{en ? 'Reserve a Table' : '????? ??????? ????'}</a>
+            <a href="#menu" className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-[#f6ebdd] transition hover:border-accent hover:text-accent">{en ? 'Explore Menu' : '???? ?????'}</a>
           </div>
           <dl className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-6">
-            {[[tableCount || 15, en ? 'Tables' : 'টেবিল'], [itemCount || 25, en ? 'Menu items' : 'আইটেম'], ['3+', en ? 'Payment ways' : 'পেমেন্ট']].map(([n, l]) => (
+            {[[availableCount, en ? 'Available now' : '??? ????'], [tableCount || 15, en ? 'Tables' : '?????'], [itemCount || 25, en ? 'Menu items' : '?????']].map(([n, l]) => (
               <div key={String(l)}><dt className="font-display text-3xl font-semibold text-[#f6ebdd]">{n}</dt><dd className="mt-1 text-xs text-[#9c8975]">{l}</dd></div>
             ))}
           </dl>
         </div>
-        <div className="relative mx-auto w-full max-w-md">
-          <CupArt className="h-auto w-full drop-shadow-[0_30px_60px_rgba(198,139,89,0.25)]" />
-          <div className="absolute -left-2 top-8 sm:-left-10 rounded-2xl border border-white/10 bg-[#241710]/80 px-4 py-3 backdrop-blur-xl shadow-xl shadow-black/20 min-w-[170px]">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bba992]">{en ? 'Table' : 'টেবিল'}</p>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                {en ? 'Available' : 'খালি'}
-              </span>
-            </div>
-            <p className="mt-2 font-display text-lg font-semibold text-[#f6ebdd]">T05</p>
-            <p className="text-xs text-[#bba992]">{en ? '4 seats · Window side' : '৪ সিট · জানালার পাশে'}</p>
+
+        <div className="relative mx-auto w-full max-w-[520px] lg:max-w-[560px] pt-8 pb-10 sm:pt-10 sm:pb-12">
+          <div className="relative mx-auto w-[74%] sm:w-[68%]">
+            <CupArt className="h-auto w-full drop-shadow-[0_30px_60px_rgba(198,139,89,0.25)]" />
           </div>
 
-          <div className="absolute -right-2 bottom-10 sm:-right-8 rounded-2xl border border-accent/20 bg-[#241710]/85 px-4 py-3.5 backdrop-blur-xl shadow-xl shadow-black/20 min-w-[190px]">
+          <div className="absolute left-0 top-0 sm:-left-2 sm:top-4 rounded-2xl border border-white/10 bg-[#241710]/90 px-4 py-3 backdrop-blur-xl shadow-xl shadow-black/20 w-[168px] sm:w-[190px] z-10">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bba992]">{en ? 'Live table' : '???? ?????'}</p>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClass}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
+                {statusLabel}
+              </span>
+            </div>
+            <p className="mt-2 font-display text-2xl font-semibold text-[#f6ebdd]">{table.code}</p>
+            <p className="text-xs text-[#bba992]">{table.seats} {en ? 'seats' : '???'}{table.zone ? ` ? ${table.zone}` : ''}</p>
+            <p className="mt-2 text-[11px] text-[#9c8975]">{dateLabel} ? {selectedSlotLabel || (en ? 'Select slot' : '???? ????????')}</p>
+          </div>
+
+          <div className="absolute right-0 bottom-0 sm:-right-2 sm:bottom-2 rounded-2xl border border-accent/20 bg-[#241710]/92 px-4 py-3.5 backdrop-blur-xl shadow-xl shadow-black/20 w-[190px] sm:w-[214px] z-10">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/80">BREW &amp; BOOK</p>
-            <p className="mt-2 text-[11px] text-[#bba992]">{en ? 'Booking token' : 'বুকিং টোকেন'}</p>
-            <p className="mt-0.5 font-mono text-base font-bold tracking-wide text-[#f6ebdd]">BB-T05-0042</p>
+            <p className="mt-2 text-[11px] text-[#bba992]">{en ? 'Booking token preview' : '????? ????? ???????'}</p>
+            <p className="mt-0.5 font-mono text-sm sm:text-base font-bold tracking-wide text-[#f6ebdd] break-all">{token}</p>
             <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-[#bba992]">
-              <span>{en ? 'Today · 7:00 PM' : 'আজ · ৭:০০ PM'}</span>
-              <span className="font-semibold text-emerald-400">{en ? 'Confirmed' : 'নিশ্চিত'}</span>
+              <span>{dateLabel}</span>
+              <span className={`font-semibold ${status === 'AVAILABLE' ? 'text-emerald-400' : status === 'HELD' ? 'text-amber-300' : 'text-rose-300'}`}>{statusLabel}</span>
             </div>
           </div>
         </div>
