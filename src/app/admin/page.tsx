@@ -507,48 +507,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-surface p-4 shadow-xs space-y-3">
-
-              <div>
-
-                <h3 className="text-sm font-bold text-primary-dark">Categories</h3>
-
-                <p className="text-[11px] text-muted">Create, rename, or delete menu categories.</p>
-
-              </div>
-
-              <form onSubmit={handleCreateCategory} className="flex flex-col sm:flex-row gap-2">
-
-                <input value={newCatName} onChange={(e)=>setNewCatName(e.target.value)} placeholder="Category name (EN)" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
-
-                <input value={newCatNameBn} onChange={(e)=>setNewCatNameBn(e.target.value)} placeholder="Name (BN, optional)" className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
-
-                <button type="submit" className="rounded-xl bg-primary-dark px-4 py-2 text-xs font-bold text-white hover:bg-primary cursor-pointer">Add Category</button>
-
-              </form>
-
-              <div className="flex flex-wrap gap-2">
-
-                {categories.map((c)=>(
-
-                  <div key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs">
-
-                    <span className="font-semibold text-primary-dark">{c.name}</span>
-
-                    {c.nameBn && <span className="text-muted">({c.nameBn})</span>}
-
-                    <button onClick={()=>handleRenameCategory(c)} className="ml-1 text-muted hover:text-primary-dark cursor-pointer">Edit</button>
-
-                    <button onClick={()=>handleDeleteCategory(c)} className="text-muted hover:text-rose-600 cursor-pointer">Delete</button>
-
-                  </div>
-
-                ))}
-
-              </div>
-
-            </div>
-
 
 
             <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-xs">
