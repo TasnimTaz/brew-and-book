@@ -87,8 +87,8 @@ export function Hero({
   const token = `BB-${(selectedDate || '').replace(/-/g, '').slice(0, 8) || 'LIVE'}-${table.code}`;
 
   return (
-    <section id="home" className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,#3a2415_0%,#140d09_60%)]">
-      <div className="mx-auto grid max-w-[1280px] items-center gap-10 px-5 pb-20 pt-14 lg:grid-cols-2 lg:px-8 lg:pb-28 lg:pt-20">
+    <section id="home" className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,#3a2415_0%,#140d09_60%)] lg:min-h-[calc(100svh-72px)] lg:flex lg:items-center">
+      <div className="mx-auto grid w-full max-w-[1280px] items-center gap-10 px-5 pb-20 pt-14 lg:grid-cols-2 lg:px-8 lg:pb-16 lg:pt-16">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-accent">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />{en ? 'Live table availability' : '???? ????? ??????'}
