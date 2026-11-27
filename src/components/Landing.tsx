@@ -86,7 +86,7 @@ export function MenuShowcase({ lang, categories, items, onAdd }: { lang: 'en' | 
         <div className="mt-8 flex flex-wrap gap-2">
           {[{ id: 'all' as const, name: en ? 'All' : 'সব', nameBn: 'সব' }, ...categories].map((c) => (
             <button key={c.id} onClick={() => setCat(c.id as number | 'all')} className={`rounded-full px-4 py-2 text-xs font-semibold transition cursor-pointer ${cat === c.id ? 'bg-accent text-[#1e1610]' : 'border border-white/15 text-[#d9c7b3] hover:border-accent'}`}>
-              {en ? c.name : c.nameBn || c.name}
+              {en ? c.name : (c.nameBn || c.name)}
             </button>
           ))}
         </div>
@@ -98,7 +98,7 @@ export function MenuShowcase({ lang, categories, items, onAdd }: { lang: 'en' | 
                 {it.tags?.[0] && <span className="absolute left-3 top-3 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-accent">{it.tags[0]}</span>}
               </div>
               <div className="p-4">
-                <h3 className="font-display text-lg font-semibold text-[#f6ebdd]">{en ? it.name : it.nameBn || it.name}</h3>
+                <h3 className="font-display text-lg font-semibold text-[#f6ebdd]">{en ? it.name : (it.nameBn || it.name)}</h3>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-base font-bold text-accent">BDT {it.priceBdt}</span>
                   <button onClick={() => onAdd(it)} className="rounded-full border border-accent/60 px-3.5 py-1.5 text-xs font-bold text-accent transition hover:bg-accent hover:text-[#1e1610] cursor-pointer">{en ? '+ Add' : '+ যোগ'}</button>

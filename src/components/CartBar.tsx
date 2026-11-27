@@ -97,7 +97,7 @@ export default function CartBar({
                   <div key={item.id} className="flex items-center justify-between gap-4 py-1">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-sm text-primary-dark truncate">
-                        {lang === 'bn' && item.nameBn ? item.nameBn : item.name}
+                        {lang === 'bn' ? (item.nameBn || item.name) : item.name}
                       </h4>
                       {optString && <p className="text-[11px] text-muted mt-0.5">{optString}</p>}
                       <p className="text-sm text-accent font-semibold mt-1">৳{item.priceBdt * item.quantity}</p>

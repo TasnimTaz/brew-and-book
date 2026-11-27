@@ -226,7 +226,7 @@ export default function TableMenuPanel({
                   selectedCategory === c.id ? 'bg-primary-dark text-white' : 'bg-background text-muted hover:text-foreground border border-border-light'
                 }`}
               >
-                {lang === 'bn' && c.nameBn ? c.nameBn : c.name}
+                {lang === 'bn' ? (c.nameBn || c.name) : c.name}
               </button>
             ))}
           </div>
@@ -257,9 +257,8 @@ export default function TableMenuPanel({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h4 className="font-semibold text-sm text-primary-dark truncate">
-                          {lang === 'bn' && item.nameBn ? item.nameBn : item.name}
+                          {lang === 'bn' ? (item.nameBn || item.name) : item.name}
                         </h4>
-                        {item.nameBn && lang === 'en' && <p className="text-[11px] text-muted-light truncate">{item.nameBn}</p>}
                       </div>
                       <span className="font-bold text-sm text-primary-dark whitespace-nowrap">৳{item.priceBdt}</span>
                     </div>
