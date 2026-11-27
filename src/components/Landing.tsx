@@ -100,7 +100,7 @@ export function MenuShowcase({ lang, categories, items, onAdd }: { lang: 'en' | 
               <div className="p-4">
                 <h3 className="font-display text-lg font-semibold text-[#f6ebdd]">{en ? it.name : (it.nameBn || it.name)}</h3>
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-base font-bold text-accent">BDT {it.priceBdt}</span>
+                  <span className="text-base font-bold text-accent">{en ? "BDT" : "?"} {it.priceBdt}</span>
                   <button onClick={() => onAdd(it)} className="rounded-full border border-accent/60 px-3.5 py-1.5 text-xs font-bold text-accent transition hover:bg-accent hover:text-[#1e1610] cursor-pointer">{en ? '+ Add' : '+ যোগ'}</button>
                 </div>
               </div>
