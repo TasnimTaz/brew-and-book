@@ -101,7 +101,7 @@ export function Hero({
                 : '???? ???? ??? ?????? ???? ??????? ????? ???? ?????, ??????? ????? ???? ???, ???? ????? ??? OTP ??????? ??? ??? ?????'}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#book" className="rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-[#1e1610] shadow-lg shadow-accent/20 transition hover:brightness-110">{en ? 'Reserve a Table' : '????? ??????? ????'}</a>
+            <a href="/book" className="rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-[#1e1610] shadow-lg shadow-accent/20 transition hover:brightness-110">{en ? 'Reserve a Table' : '????? ??????? ????'}</a>
             <a href="#menu" className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-[#f6ebdd] transition hover:border-accent hover:text-accent">{en ? 'Explore Menu' : '???? ?????'}</a>
           </div>
           <dl className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-6">
@@ -227,7 +227,7 @@ export function OurSpace({ lang }: { lang: 'en' | 'bn' }) {
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">{en ? 'Our space' : 'আমাদের জায়গা'}</p>
           <h2 className="font-display mt-3 text-4xl font-semibold text-[#f6ebdd] sm:text-5xl">{en ? 'A place to slow down' : 'একটু থেমে বসার জায়গা'}</h2>
           <p className="mt-5 text-sm leading-relaxed text-[#a8957f]">{en ? 'Window lounge, quiet study corner, family booths and a garden terrace. See every seat before you arrive and book the one you love.' : 'উইন্ডো লাউঞ্জ, শান্ত স্টাডি কর্নার, ফ্যামিলি বুথ ও গার্ডেন টেরেস। আসার আগেই পছন্দের আসনটি বুক করুন।'}</p>
-          <a href="#book" className="mt-7 inline-block rounded-full bg-accent px-6 py-3 text-sm font-bold text-[#1e1610] transition hover:brightness-110">{en ? 'See the floor plan' : 'ফ্লোর প্ল্যান দেখুন'}</a>
+          <a href="/book" className="mt-7 inline-block rounded-full bg-accent px-6 py-3 text-sm font-bold text-[#1e1610] transition hover:brightness-110">{en ? 'See the floor plan' : 'ফ্লোর প্ল্যান দেখুন'}</a>
         </div>
         <div className="grid grid-cols-2 gap-4 lg:col-span-3">
           {[PHOTOS.interior1, PHOTOS.interior2].map((src, i) => (

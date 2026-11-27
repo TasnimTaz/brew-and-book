@@ -8,21 +8,21 @@ interface NavbarProps { lang: 'en' | 'bn'; onToggleLang: () => void; cartCount: 
 export default function Navbar({ lang, onToggleLang, cartCount, cartTotal, onOpenCart }: NavbarProps) {
   const en = lang === 'en';
   const links = [
-    { href: '#home', t: en ? 'Home' : 'হোম' },
-    { href: '#menu', t: en ? 'Menu' : 'মেনু' },
-    { href: '#book', t: en ? 'Book a Table' : 'টেবিল বুক' },
-    { href: '#how', t: en ? 'How it works' : 'কীভাবে কাজ করে' },
+    { href: '/', t: en ? 'Home' : 'হোম' },
+    { href: '/#menu', t: en ? 'Menu' : 'মেনু' },
+    { href: '/book', t: en ? 'Book a Table' : 'টেবিল বুক' },
+    { href: '/#how', t: en ? 'How it works' : 'কীভাবে কাজ করে' },
   ];
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#140d09]/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between px-5 py-3.5 lg:px-8">
-        <Link href="#home" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-[#1e1610]"><CoffeeIcon className="h-5 w-5" /></span>
           <span className="font-display text-xl font-semibold tracking-tight text-[#f6ebdd]">Brew <span className="text-accent">&amp;</span> Book</span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm font-medium text-[#d9c7b3] transition-colors hover:text-white">{l.t}</a>
+            <Link key={l.href} href={l.href} className="text-sm font-medium text-[#d9c7b3] transition-colors hover:text-white">{l.t}</Link>
           ))}
         </nav>
         <div className="flex items-center gap-2">
