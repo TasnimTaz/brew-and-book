@@ -83,7 +83,7 @@ export default function AdminPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, adminFetch]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
