@@ -243,9 +243,9 @@ export default function Home() {
 
       <main className="flex-1 bg-[#f6f2ec] py-10 sm:py-14">
         <div className="mx-auto max-w-[1280px] px-5 lg:px-8 mb-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">{lang === 'en' ? 'Reserve your spot' : '????? ??? ??????? ????'}</p>
-          <h1 className="font-display mt-2 text-4xl font-semibold text-primary-dark sm:text-5xl">{lang === 'en' ? 'Book a Table' : '????? ??? ????'}</h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted">{lang === 'en' ? 'Pick a date, slot, and table in real time. Add menu items, verify with OTP, and get your booking token instantly.' : '?????, ???? ??? ????? ??????-????? ???? ???? ???? ????? ??? ????, OTP ????? ???? ??? ???? ???? ????? ????? ????'}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">{lang === 'en' ? 'Reserve your spot' : 'আপনার আসন রিজার্ভ করুন'}</p>
+          <h1 className="font-display mt-2 text-4xl font-semibold text-primary-dark sm:text-5xl">{lang === 'en' ? 'Book a Table' : 'টেবিল বুক করুন'}</h1>
+          <p className="mt-3 max-w-2xl text-sm text-muted">{lang === 'en' ? 'Pick a date, slot, and table in real time. Add menu items, verify with OTP, and get your booking token instantly.' : 'রিয়েল-টাইমে তারিখ, স্লট ও টেবিল বেছে নিন। মেনু আইটেম যোগ করুন, OTP দিয়ে যাচাই করুন এবং সাথে সাথে বুকিং টোকেন পান।'}</p>
         </div>
         <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 space-y-5">
           <SlotSelector
@@ -271,7 +271,7 @@ export default function Home() {
                   <div className="flex flex-col items-center gap-3">
                     <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                     <p className="text-xs font-semibold text-muted">
-                      {lang === 'en' ? 'Loading live floor plan...' : '???? ????? ??????? ??? ?????...'}
+                      {lang === 'en' ? 'Loading live floor plan...' : 'লাইভ ফ্লোর প্ল্যান লোড হচ্ছে...'}
                     </p>
                   </div>
                 </div>
@@ -320,7 +320,7 @@ export default function Home() {
         lang={lang}
         isOpen={isCartModalOpen}
         onToggleOpen={() => setIsCartModalOpen((prev) => !prev)}
-        onCheckout={() => { if (!selectedTable) { showToast(lang==='en'?'Select a table first':'??? ???? ????? ???????? ????'); return; } if (!activeSlot) { showToast(lang==='en'?'Select a time slot':'???? ???? ???? ???????? ????'); return; } setIsCartModalOpen(false); setBookingOpen(true); }}
+        onCheckout={() => { if (!selectedTable) { showToast(lang==='en'?'Select a table first':'আগে একটি টেবিল বেছে নিন'); return; } if (!activeSlot) { showToast(lang==='en'?'Select a time slot':'একটি সময় স্লট বেছে নিন'); return; } setIsCartModalOpen(false); setBookingOpen(true); }}
       />
 
       <BookingModal
@@ -332,7 +332,7 @@ export default function Home() {
         selectedTable={selectedTable}
         selectedDate={selectedDate}
         selectedSlot={activeSlot}
-        onSuccess={(booking) => { setBookingOpen(false); setCart([]); setIsCartModalOpen(false); showToast(lang==='en'?'Booking confirmed!':'????? ???????!'); router.push(`/booking/${booking.token}`); }}
+        onSuccess={(booking) => { setBookingOpen(false); setCart([]); setIsCartModalOpen(false); showToast(lang==='en'?'Booking confirmed!':'বুকিং নিশ্চিত হয়েছে!'); router.push(`/booking/${booking.token}`); }}
       />
 
       <SiteFooter lang={lang} />

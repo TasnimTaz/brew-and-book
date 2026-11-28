@@ -3,12 +3,14 @@ import { withTx, releaseExpiredHolds } from '@/lib/booking/db';
 import { normalizeBdPhone, verifySignedPayload, bookingToken, signPayload, maskPhone } from '@/lib/booking/utils';
 import QRCode from 'qrcode';
 import { emitBookingUpdate } from '@/lib/realtime';
+import { sslEnabled, depositBdt } from '@/lib/sslcommerz';
+import { startOnlinePayment } from '@/lib/payments';
 
 export async function POST(request: NextRequest) {
   try {
     await releaseExpiredHolds().catch(() => {});
     const body = await request.json();
-    const { tableId, slotId, date, guests, name, phone, note, cart, verification } = body;
+    const { tableId, slotId, date, guests, name, phone, note, cart, verification, paymentMethod } = body;
 
     const normalizedPhone = normalizeBdPhone(String(phone || ''));
     if (!tableId || !slotId || !date || !guests || !name || !normalizedPhone) {
@@ -26,6 +28,9 @@ export async function POST(request: NextRequest) {
     if (!Number.isInteger(guestsN) || guestsN < 1 || guestsN > 20) return NextResponse.json({ error: 'Guests must be a whole number between 1 and 20' }, { status: 400 });
     if (!Number.isInteger(tableIdN) || !Number.isInteger(slotIdN)) return NextResponse.json({ error: 'Invalid table or slot' }, { status: 400 });
     if (cleanName.length < 2) return NextResponse.json({ error: 'Please enter your name' }, { status: 400 });
+
+    const online = String(paymentMethod || '').toUpperCase() === 'ONLINE';
+    if (online && !sslEnabled()) return NextResponse.json({ error: 'Online payment is not available right now. Please choose Pay at shop.' }, { status: 400 });
 
     const bookingDate = String(date).slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate) || Number.isNaN(Date.parse(`${bookingDate}T00:00:00+06:00`))) {
@@ -80,6 +85,11 @@ export async function POST(request: NextRequest) {
       );
       if (activeRes.rows[0].n >= 5) throw Object.assign(new Error('You already have 5 upcoming bookings. Please cancel one first.'), { status: 429 });
 
+      const heldRes = await client.query(
+        `SELECT COUNT(*)::int AS n FROM "Booking" WHERE "userId"=$1 AND status='HELD' AND "holdExpiresAt" > NOW()`, [userId]
+      );
+      if (heldRes.rows[0].n >= 2) throw Object.assign(new Error('You already have bookings waiting for payment. Please finish or wait for them to expire.'), { status: 429 });
+
       const serialRes = await client.query(
         `SELECT COALESCE(MAX(serial),0)+1 AS serial FROM "Booking" WHERE date::date=$1::date`,
         [bookingDate]
@@ -93,8 +103,8 @@ export async function POST(request: NextRequest) {
 
       const bRes = await client.query(
         `INSERT INTO "Booking" ("token","serial","tableId","userId","date","slotId","guests","status","note","holdExpiresAt","qrPayload","createdAt","updatedAt")
-         VALUES ($1,$2,$3,$4,$5::date,$6,$7,'CONFIRMED',$8,$9,$10,NOW(),NOW()) RETURNING *`,
-        [token, serial, tableIdN, userId, bookingDate, slotIdN, guestsN, note ? String(note).slice(0, 500) : null, holdExpiresAt, qrPayload]
+         VALUES ($1,$2,$3,$4,$5::date,$6,$7,$11,$8,$9,$10,NOW(),NOW()) RETURNING *`,
+        [token, serial, tableIdN, userId, bookingDate, slotIdN, guestsN, note ? String(note).slice(0, 500) : null, holdExpiresAt, qrPayload, online ? 'HELD' : 'CONFIRMED']
       );
       const bookingRow = bRes.rows[0];
 
@@ -121,7 +131,7 @@ export async function POST(request: NextRequest) {
             [orderId, it.menuItemId, it.quantity, it.unitPriceBdt, it.options ? JSON.stringify(it.options) : null]
           );
         }
-        await client.query(
+        if (!online) await client.query(
           `INSERT INTO "Payment" ("bookingId","gateway","method","amountBdt","status","createdAt","updatedAt") VALUES ($1,'NONE','PAY_AT_SHOP',$2,'UNPAID',NOW(),NOW())`,
           [bookingRow.id, totalBdt]
         );
@@ -130,7 +140,21 @@ export async function POST(request: NextRequest) {
       return { booking: bookingRow, table, slot, user: { name: cleanName, phone: normalizedPhone }, totalBdt, items: validItems };
     });
 
-    emitBookingUpdate({ type: 'booking.updated', date: String(date).slice(0,10), slotId: Number(slotId), tableId: Number(tableId), status: 'CONFIRMED', bookingId: booking.booking.id, token: booking.booking.token });
+    let paymentUrl: string | null = null;
+    let paymentAmountBdt = 0;
+    if (online) {
+      paymentAmountBdt = booking.totalBdt > 0 ? booking.totalBdt : depositBdt();
+      try {
+        paymentUrl = await startOnlinePayment(booking.booking.id, paymentAmountBdt, { name: booking.user.name, phone: booking.user.phone });
+      } catch (gwErr) {
+        console.error('Could not start online payment', gwErr);
+        await withTx(async (c) => { await c.query(`UPDATE "Booking" SET status='CANCELLED', "updatedAt"=NOW() WHERE id=$1`, [booking.booking.id]); });
+        emitBookingUpdate({ type: 'booking.updated', date: bookingDate, slotId: slotIdN, tableId: tableIdN, status: 'CANCELLED', bookingId: booking.booking.id, token: booking.booking.token });
+        return NextResponse.json({ error: 'The payment gateway is not reachable right now. Please try again or choose Pay at shop.' }, { status: 502 });
+      }
+    }
+
+    emitBookingUpdate({ type: 'booking.updated', date: String(date).slice(0,10), slotId: Number(slotId), tableId: Number(tableId), status: online ? 'HELD' : 'CONFIRMED', bookingId: booking.booking.id, token: booking.booking.token });
     const qrDataUrl = await QRCode.toDataURL(booking.booking.qrPayload || booking.booking.token, { width: 320, margin: 1 });
     return NextResponse.json({
       ok: true,
@@ -145,6 +169,8 @@ export async function POST(request: NextRequest) {
         totalBdt: booking.totalBdt,
         items: booking.items,
         qrDataUrl,
+        paymentUrl,
+        paymentAmountBdt,
       },
     }, { status: 201 });
   } catch (e: unknown) {

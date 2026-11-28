@@ -76,7 +76,7 @@ export function Hero({
   const en = lang === 'en';
   const table = previewTable || { code: 'T05', seats: 4, zone: 'Window side', status: 'AVAILABLE' };
   const status = table.status || 'AVAILABLE';
-  const statusLabel = status === 'AVAILABLE' ? (en ? 'Available' : '????') : status === 'HELD' ? (en ? 'Held' : '?????') : (en ? 'Booked' : '????');
+  const statusLabel = status === 'AVAILABLE' ? (en ? 'Available' : 'খালি') : status === 'HELD' ? (en ? 'Held' : 'হোল্ড') : (en ? 'Booked' : 'বুকড');
   const statusClass = status === 'AVAILABLE' ? 'bg-emerald-400/15 text-emerald-400' : status === 'HELD' ? 'bg-amber-400/15 text-amber-300' : 'bg-rose-400/15 text-rose-300';
   const dotClass = status === 'AVAILABLE' ? 'bg-emerald-400' : status === 'HELD' ? 'bg-amber-300' : 'bg-rose-300';
   const dateLabel = (() => {
@@ -91,21 +91,21 @@ export function Hero({
       <div className="mx-auto grid w-full max-w-[1280px] items-center gap-10 px-5 pb-20 pt-14 lg:grid-cols-2 lg:px-8 lg:pb-16 lg:pt-16">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-accent">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />{en ? 'Live table availability' : '???? ????? ??????'}
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />{en ? 'Live table availability' : 'লাইভ টেবিল স্ট্যাটাস'}
           </span>
           <h1 className="font-display mt-5 text-5xl font-semibold leading-[1.05] text-[#f6ebdd] sm:text-6xl lg:text-7xl">
-            {en ? <>Reserve Your Table.<br /><span className="text-accent">Savor Every Sip.</span></> : <>????? ????? ??????? ?????<br /><span className="text-accent">??????? ?????? ????? ?????</span></>}
+            {en ? <>Reserve Your Table.<br /><span className="text-accent">Savor Every Sip.</span></> : <>আপনার টেবিল বুক করুন।<br /><span className="text-accent">কফির স্বাদ নিন প্রাণ ভরে।</span></>}
           </h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-[#bba992]">
             {en ? 'See the cafe floor in real time, pick the exact table you like, browse the menu and book with OTP confirmation before you arrive.'
-                : '???? ???? ??? ?????? ???? ??????? ????? ???? ?????, ??????? ????? ???? ???, ???? ????? ??? OTP ??????? ??? ??? ?????'}
+                : 'ক্যাফের ফ্লোর লাইভ দেখুন, পছন্দের টেবিল বেছে মেনু দেখুন, OTP দিয়ে যাচাই করে সাথে সাথে বুকিং টোকেন পেয়ে যান।'}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="/book" className="rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-[#1e1610] shadow-lg shadow-accent/20 transition hover:brightness-110">{en ? 'Reserve a Table' : '????? ??????? ????'}</a>
-            <a href="#menu" className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-[#f6ebdd] transition hover:border-accent hover:text-accent">{en ? 'Explore Menu' : '???? ?????'}</a>
+            <a href="/book" className="rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-[#1e1610] shadow-lg shadow-accent/20 transition hover:brightness-110">{en ? 'Reserve a Table' : 'টেবিল বুক করুন'}</a>
+            <a href="#menu" className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-[#f6ebdd] transition hover:border-accent hover:text-accent">{en ? 'Explore Menu' : 'মেনু দেখুন'}</a>
           </div>
           <dl className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-6">
-            {[[availableCount, en ? 'Available now' : '??? ????'], [tableCount || 15, en ? 'Tables' : '?????'], [itemCount || 25, en ? 'Menu items' : '?????']].map(([n, l]) => (
+            {[[availableCount, en ? 'Available now' : 'এখন খালি'], [tableCount || 15, en ? 'Tables' : 'টেবিল'], [itemCount || 25, en ? 'Menu items' : 'আইটেম']].map(([n, l]) => (
               <div key={String(l)}><dt className="font-display text-3xl font-semibold text-[#f6ebdd]">{n}</dt><dd className="mt-1 text-xs text-[#9c8975]">{l}</dd></div>
             ))}
           </dl>
@@ -118,20 +118,20 @@ export function Hero({
 
           <div className="absolute left-0 top-0 sm:-left-2 sm:top-4 rounded-2xl border border-white/10 bg-[#241710]/90 px-4 py-3 backdrop-blur-xl shadow-xl shadow-black/20 w-[168px] sm:w-[190px] z-10">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bba992]">{en ? 'Live table' : '???? ?????'}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bba992]">{en ? 'Live table' : 'লাইভ টেবিল'}</p>
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClass}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
                 {statusLabel}
               </span>
             </div>
             <p className="mt-2 font-display text-2xl font-semibold text-[#f6ebdd]">{table.code}</p>
-            <p className="text-xs text-[#bba992]">{table.seats} {en ? 'seats' : '???'}{table.zone ? ` ? ${table.zone}` : ''}</p>
-            <p className="mt-2 text-[11px] text-[#9c8975]">{dateLabel} ? {selectedSlotLabel || (en ? 'Select slot' : '???? ????????')}</p>
+            <p className="text-xs text-[#bba992]">{table.seats} {en ? 'seats' : 'সিট'}{table.zone ? ` · ${table.zone}` : ''}</p>
+            <p className="mt-2 text-[11px] text-[#9c8975]">{dateLabel} · {selectedSlotLabel || (en ? 'Select slot' : 'স্লট বাছুন')}</p>
           </div>
 
           <div className="absolute right-0 bottom-0 sm:-right-2 sm:bottom-2 rounded-2xl border border-accent/20 bg-[#241710]/92 px-4 py-3.5 backdrop-blur-xl shadow-xl shadow-black/20 w-[190px] sm:w-[214px] z-10">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent/80">BREW &amp; BOOK</p>
-            <p className="mt-2 text-[11px] text-[#bba992]">{en ? 'Booking token preview' : '????? ????? ???????'}</p>
+            <p className="mt-2 text-[11px] text-[#bba992]">{en ? 'Booking token preview' : 'বুকিং টোকেন প্রিভিউ'}</p>
             <p className="mt-0.5 font-mono text-sm sm:text-base font-bold tracking-wide text-[#f6ebdd] break-all">{token}</p>
             <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-[#bba992]">
               <span>{dateLabel}</span>

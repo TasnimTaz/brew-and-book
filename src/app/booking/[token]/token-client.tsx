@@ -3,11 +3,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function TokenClient({ token }: { token: string }) {
-  type Booking = { token:string; serial:number; status:string; date:string; guests:number; note?:string|null; tableCode:string; slotLabel:string; customerName:string; customerPhone:string; paymentStatus:string; totalBdt:number; qrDataUrl?:string; items?: {quantity:number; name:string; unitPriceBdt:number}[] };
+  type Booking = { token:string; serial:number; status:string; date:string; guests:number; note?:string|null; tableCode:string; slotLabel:string; customerName:string; customerPhone:string; paymentStatus:string; holdExpiresAt?:string|null; totalBdt:number; qrDataUrl?:string; items?: {quantity:number; name:string; unitPriceBdt:number}[] };
   const [data, setData] = useState<Booking | null>(null);
   const [error, setError] = useState('');
   const [phone, setPhone] = useState('');
   const [msg, setMsg] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [paying, setPaying] = useState(false);
+  const [payNote] = useState(() => (typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('payment') || ''));
 
   const load = useCallback(async () => {
     try { const r = await fetch(`/api/bookings/${token}`, { cache: 'no-store' }); const d = await r.json(); if (!r.ok) throw new Error(d.error||'Failed'); setData(d.booking); setError(''); }
@@ -22,10 +25,27 @@ export default function TokenClient({ token }: { token: string }) {
     return () => { active = false; };
   }, [token]);
 
+  const holding = data?.status === 'HELD';
+  useEffect(() => {
+    if (!holding) return;
+    const t = setInterval(() => { load(); }, 4000);
+    return () => clearInterval(t);
+  }, [holding, load]);
+
+  const payNow = async () => {
+    setActionError(''); setPaying(true);
+    try {
+      const r = await fetch('/api/payments/sslcommerz/init', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, phone }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Could not start the payment');
+      window.location.assign(d.paymentUrl);
+    } catch (e: unknown) { setActionError(e instanceof Error ? e.message : 'Could not start the payment'); setPaying(false); }
+  };
+
   const cancel = async () => {
-    setMsg(''); setError('');
+    setMsg(''); setActionError('');
     const r = await fetch(`/api/bookings/${token}/cancel`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone }) });
-    const d = await r.json(); if (!r.ok) { setError(d.error||'Cancel failed'); return; } setMsg('Booking cancelled.'); load();
+    const d = await r.json(); if (!r.ok) { setActionError(d.error||'Cancel failed'); return; } setMsg('Booking cancelled.'); load();
   };
 
   if (error) return <div className="min-h-screen bg-[#f6f2ec] p-6"><div className="max-w-xl mx-auto bg-white rounded-2xl p-6 border"><h1 className="font-display text-2xl text-primary-dark">Booking</h1><p className="text-rose-600 mt-2">{error}</p></div></div>;
@@ -63,6 +83,28 @@ export default function TokenClient({ token }: { token: string }) {
           </div>
         </div>
 
+        {payNote && (
+          <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm ${payNote === 'success' && data.status === 'CONFIRMED' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : payNote === 'success' || payNote === 'pending' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-rose-200 bg-rose-50 text-rose-800'}`}>
+            {payNote === 'success' && data.status === 'CONFIRMED' && 'Payment received. Your booking is confirmed.'}
+            {(payNote === 'success' || payNote === 'pending') && data.status !== 'CONFIRMED' && 'We are confirming your payment. This page updates automatically.'}
+            {payNote === 'failed' && 'The payment did not go through. Your table is still held for a few minutes, so you can try again below.'}
+            {payNote === 'cancelled' && 'You cancelled the payment. Your table is still held for a few minutes, so you can try again below.'}
+          </div>
+        )}
+
+        {data.status === 'HELD' && data.paymentStatus !== 'PAID' && (
+          <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <h2 className="font-semibold text-primary-dark">Payment pending</h2>
+            <p className="mt-1 text-xs text-muted">
+              Your table is held{data.holdExpiresAt ? ` until ${new Date(data.holdExpiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ' for a few minutes'}. Pay online with bKash, Nagad, Rocket or card to confirm it.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="Booking phone (01XXXXXXXXX)" className="flex-1 rounded-xl border border-border px-3 py-2 text-sm" />
+              <button onClick={payNow} disabled={paying || !phone} className="rounded-xl bg-primary-dark text-white px-4 py-2 text-sm font-semibold disabled:opacity-50 cursor-pointer">{paying ? 'Opening...' : `Pay BDT ${data.totalBdt}`}</button>
+            </div>
+          </div>
+        )}
+
         {(data.items?.length ?? 0) > 0 && (
           <div className="mt-6 border-t pt-4">
             <h2 className="font-semibold text-primary-dark mb-2">Pre-order</h2>
@@ -80,7 +122,7 @@ export default function TokenClient({ token }: { token: string }) {
             <button onClick={cancel} className="rounded-xl border border-rose-200 text-rose-700 px-4 py-2 text-sm font-semibold hover:bg-rose-50 cursor-pointer">Cancel</button>
           </div>
           {msg && <p className="text-sm text-emerald-700 mt-2">{msg}</p>}
-          {error && <p className="text-sm text-rose-700 mt-2">{error}</p>}
+          {actionError && <p className="text-sm text-rose-700 mt-2">{actionError}</p>}
         </div>
       </div>
     </div>
