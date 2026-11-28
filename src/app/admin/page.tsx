@@ -50,6 +50,12 @@ export default function AdminPage() {
     setTimeout(() => setStatusMessage((prev) => (prev === msg ? null : prev)), 2500);
   };
 
+    const adminFetch = useCallback(async (url: string, init?: RequestInit) => {
+    const res = await fetch(url, init);
+    if (res.status === 401) { router.push('/admin/login'); throw new Error('Session expired'); }
+    return res;
+  }, [router]);
+
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -60,8 +66,8 @@ export default function AdminPage() {
       }
 
       const [menuRes, tablesRes] = await Promise.all([
-        fetch('/api/menu?all=true').then((r) => r.json()),
-        fetch('/api/tables?all=true').then((r) => r.json()),
+        adminFetch('/api/menu?all=true').then((r) => r.json()),
+        adminFetch('/api/tables?all=true').then((r) => r.json()),
       ]);
 
       if (menuRes.categories && menuRes.items) {
@@ -97,7 +103,7 @@ export default function AdminPage() {
       prev.map((i) => (i.id === item.id ? { ...i, available: updatedStatus } : i))
     );
     try {
-      const res = await fetch(`/api/menu/items/${item.id}`, {
+      const res = await adminFetch(`/api/menu/items/${item.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ available: updatedStatus }),
@@ -117,7 +123,7 @@ export default function AdminPage() {
 
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, priceBdt: newPrice } : i)));
     try {
-      await fetch(`/api/menu/items/${item.id}`, {
+      await adminFetch(`/api/menu/items/${item.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceBdt: newPrice }),
@@ -132,7 +138,7 @@ export default function AdminPage() {
     if (!confirm(`Delete "${name}" from menu?`)) return;
     setItems((prev) => prev.filter((i) => i.id !== itemId));
     try {
-      await fetch(`/api/menu/items/${itemId}`, { method: 'DELETE' });
+      await adminFetch(`/api/menu/items/${itemId}`, { method: 'DELETE' });
       notify(`Deleted ${name}`);
     } catch {
       loadData();
@@ -143,7 +149,7 @@ export default function AdminPage() {
     e.preventDefault();
     if (!newCatName.trim()) return;
     try {
-      const res = await fetch('/api/menu/categories', {
+      const res = await adminFetch('/api/menu/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCatName.trim(), nameBn: newCatNameBn.trim() || null, sortOrder: categories.length }),
@@ -163,7 +169,7 @@ export default function AdminPage() {
     if (!name) return;
     const nameBn = prompt('Category name (BN, optional):', cat.nameBn || '') ?? '';
     try {
-      await fetch(`/api/menu/categories/${cat.id}`, {
+      await adminFetch(`/api/menu/categories/${cat.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), nameBn: nameBn.trim() || null }),
@@ -178,7 +184,7 @@ export default function AdminPage() {
   const handleDeleteCategory = async (cat: MenuCategory) => {
     if (!confirm(`Delete category "${cat.name}"?`)) return;
     try {
-      const res = await fetch(`/api/menu/categories/${cat.id}`, { method: 'DELETE' });
+      const res = await adminFetch(`/api/menu/categories/${cat.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Failed');
       notify('Category deleted');
@@ -191,7 +197,7 @@ export default function AdminPage() {
   const uploadImage = async (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+    const res = await adminFetch('/api/upload', { method: 'POST', body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Upload failed');
     return data.url as string;
@@ -200,7 +206,7 @@ export default function AdminPage() {
   const handleCreateTable = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/tables', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+      const res = await adminFetch('/api/tables', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
         ...newTable, code: newTable.code.trim().toUpperCase(), zone: newTable.zone.trim(), photoUrl: newTable.photoUrl || null,
       })});
       const data = await res.json();
@@ -214,7 +220,7 @@ export default function AdminPage() {
 
   const handleTablePatch = async (id: number, payload: Record<string, unknown>, msg: string) => {
     try {
-      const res = await fetch(`/api/tables/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await adminFetch(`/api/tables/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       notify(msg);
@@ -235,7 +241,7 @@ export default function AdminPage() {
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
 
-      const res = await fetch('/api/menu/items', {
+      const res = await adminFetch('/api/menu/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -265,7 +271,7 @@ export default function AdminPage() {
 
   const handleSaveTableCoords = async (tableId: number, x: number, y: number, seats: number) => {
     try {
-      const res = await fetch(`/api/tables/${tableId}`, {
+      const res = await adminFetch(`/api/tables/${tableId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ x: Math.round(x), y: Math.round(y), seats }),
@@ -320,7 +326,7 @@ export default function AdminPage() {
     const moved = tables.find((t) => t.id === draggingId);
     setDraggingId(null);
     if (moved) {
-      await fetch(`/api/tables/${moved.id}`, {
+      await adminFetch(`/api/tables/${moved.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ x: moved.x, y: moved.y }),

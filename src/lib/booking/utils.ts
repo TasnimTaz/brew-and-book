@@ -17,8 +17,15 @@ export function maskPhone(phone: string): string {
   return `${n.slice(0, 3)}****${n.slice(-3)}`;
 }
 
+const PLACEHOLDER = 'change-me-in-production';
+function secretOrThrow(value: string | undefined): string {
+  if (value && value !== PLACEHOLDER) return value;
+  if (process.env.NODE_ENV === 'production') throw new Error('OTP_SECRET / TOKEN_SECRET must be set to a real secret in production');
+  return 'dev-only-secret';
+}
+
 export function otpHash(phone: string, code: string): string {
-  const secret = process.env.OTP_SECRET || 'change-me-in-production';
+  const secret = secretOrThrow(process.env.OTP_SECRET);
   return crypto.createHmac('sha256', secret).update(`${phone}:${code}`).digest('hex');
 }
 
@@ -27,7 +34,7 @@ export function makeOtpCode(): string {
 }
 
 export function signPayload(payload: string): string {
-  const secret = process.env.TOKEN_SECRET || process.env.OTP_SECRET || 'change-me-in-production';
+  const secret = secretOrThrow(process.env.TOKEN_SECRET || process.env.OTP_SECRET);
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }
 

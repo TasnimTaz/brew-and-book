@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ADMIN_COOKIE, verifyAdminSession } from '@/lib/admin-auth';
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get('brew_admin_token')?.value;
-
-  if (token === 'authenticated_admin_session') {
-    return NextResponse.json({ authenticated: true, email: process.env.ADMIN_EMAIL || 'admin@brewbook.local' });
-  }
-
+  const session = verifyAdminSession(request.cookies.get(ADMIN_COOKIE)?.value);
+  if (session) return NextResponse.json({ authenticated: true, email: session.email });
   return NextResponse.json({ authenticated: false }, { status: 401 });
 }

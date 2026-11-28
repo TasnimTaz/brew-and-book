@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
 import { withTx, releaseExpiredHolds } from '@/lib/booking/db';
 import { normalizeBdPhone, verifySignedPayload, bookingToken, signPayload, maskPhone } from '@/lib/booking/utils';
 import QRCode from 'qrcode';
@@ -20,26 +19,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Phone verification required. Please verify OTP.' }, { status: 401 });
     }
 
+    const guestsN = Number(guests);
+    const tableIdN = Number(tableId);
+    const slotIdN = Number(slotId);
+    const cleanName = String(name).trim();
+    if (!Number.isInteger(guestsN) || guestsN < 1 || guestsN > 20) return NextResponse.json({ error: 'Guests must be a whole number between 1 and 20' }, { status: 400 });
+    if (!Number.isInteger(tableIdN) || !Number.isInteger(slotIdN)) return NextResponse.json({ error: 'Invalid table or slot' }, { status: 400 });
+    if (cleanName.length < 2) return NextResponse.json({ error: 'Please enter your name' }, { status: 400 });
+
     const bookingDate = String(date).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate) || Number.isNaN(Date.parse(`${bookingDate}T00:00:00+06:00`))) {
+      return NextResponse.json({ error: 'Invalid booking date' }, { status: 400 });
+    }
+    const todayBd = new Date(Date.now() + 6 * 3600_000).toISOString().slice(0, 10);
+    const maxBd = new Date(Date.now() + 6 * 3600_000 + 60 * 86400_000).toISOString().slice(0, 10);
+    if (bookingDate < todayBd) return NextResponse.json({ error: 'You cannot book a past date' }, { status: 400 });
+    if (bookingDate > maxBd) return NextResponse.json({ error: 'Bookings open up to 60 days ahead' }, { status: 400 });
     const booking = await withTx(async (client) => {
-      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`${tableId}:${bookingDate}:${slotId}`]);
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`${tableIdN}:${bookingDate}:${slotIdN}`]);
+      // Second lock (always taken after the first) so two tables booked at the same moment never get the same serial number
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`serial:${bookingDate}`]);
       await client.query(`UPDATE "Booking" SET status='CANCELLED', "updatedAt"=NOW() WHERE status='HELD' AND "holdExpiresAt" <= NOW()`);
 
-      const tableRes = await client.query(`SELECT id, code, seats, active FROM "Table" WHERE id=$1 FOR UPDATE`, [tableId]);
+      const tableRes = await client.query(`SELECT id, code, seats, active FROM "Table" WHERE id=$1 FOR UPDATE`, [tableIdN]);
       if (!tableRes.rowCount) throw Object.assign(new Error('Table not found'), { status: 404 });
       const table = tableRes.rows[0];
       if (!table.active) throw Object.assign(new Error('Table is not available'), { status: 400 });
-      if (Number(guests) > Number(table.seats)) throw Object.assign(new Error(`This table allows up to ${table.seats} guests`), { status: 400 });
+      if (guestsN > Number(table.seats)) throw Object.assign(new Error(`This table allows up to ${table.seats} guests`), { status: 400 });
 
-      const slotRes = await client.query(`SELECT id, label, start, "end" FROM "TimeSlot" WHERE id=$1 AND active=true`, [slotId]);
+      const slotRes = await client.query(`SELECT id, label, start, "end" FROM "TimeSlot" WHERE id=$1 AND active=true`, [slotIdN]);
       if (!slotRes.rowCount) throw Object.assign(new Error('Invalid time slot'), { status: 400 });
       const slot = slotRes.rows[0];
+      if (new Date(`${bookingDate}T${slot.start}:00+06:00`).getTime() <= Date.now()) {
+        throw Object.assign(new Error('This time slot has already started. Please choose a later slot.'), { status: 400 });
+      }
 
       const conflict = await client.query(
         `SELECT id, status FROM "Booking" WHERE "tableId"=$1 AND date::date=$2::date AND "slotId"=$3
          AND (status IN ('CONFIRMED','COMPLETED') OR (status='HELD' AND ("holdExpiresAt" IS NULL OR "holdExpiresAt" > NOW())))
          LIMIT 1 FOR UPDATE`,
-        [tableId, bookingDate, slotId]
+        [tableIdN, bookingDate, slotIdN]
       );
       if (conflict.rowCount) throw Object.assign(new Error('This table was just booked for the selected slot. Please choose another table.'), { status: 409 });
 
@@ -47,14 +66,19 @@ export async function POST(request: NextRequest) {
       let userId: number;
       if (userRes.rowCount) {
         userId = userRes.rows[0].id;
-        await client.query(`UPDATE "User" SET name=$1, "updatedAt"=NOW() WHERE id=$2`, [String(name).trim().slice(0, 120), userId]);
+        await client.query(`UPDATE "User" SET name=$1, "updatedAt"=NOW() WHERE id=$2`, [cleanName.slice(0, 120), userId]);
       } else {
         const ins = await client.query(
           `INSERT INTO "User" ("name","phone","role","createdAt","updatedAt") VALUES ($1,$2,'CUSTOMER',NOW(),NOW()) RETURNING id`,
-          [String(name).trim().slice(0, 120), normalizedPhone]
+          [cleanName.slice(0, 120), normalizedPhone]
         );
         userId = ins.rows[0].id;
       }
+
+      const activeRes = await client.query(
+        `SELECT COUNT(*)::int AS n FROM "Booking" WHERE "userId"=$1 AND status='CONFIRMED' AND date::date >= CURRENT_DATE`, [userId]
+      );
+      if (activeRes.rows[0].n >= 5) throw Object.assign(new Error('You already have 5 upcoming bookings. Please cancel one first.'), { status: 429 });
 
       const serialRes = await client.query(
         `SELECT COALESCE(MAX(serial),0)+1 AS serial FROM "Booking" WHERE date::date=$1::date`,
@@ -70,7 +94,7 @@ export async function POST(request: NextRequest) {
       const bRes = await client.query(
         `INSERT INTO "Booking" ("token","serial","tableId","userId","date","slotId","guests","status","note","holdExpiresAt","qrPayload","createdAt","updatedAt")
          VALUES ($1,$2,$3,$4,$5::date,$6,$7,'CONFIRMED',$8,$9,$10,NOW(),NOW()) RETURNING *`,
-        [token, serial, tableId, userId, bookingDate, slotId, Number(guests), note ? String(note).slice(0, 500) : null, holdExpiresAt, qrPayload]
+        [token, serial, tableIdN, userId, bookingDate, slotIdN, guestsN, note ? String(note).slice(0, 500) : null, holdExpiresAt, qrPayload]
       );
       const bookingRow = bRes.rows[0];
 
@@ -103,7 +127,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      return { booking: bookingRow, table, slot, user: { name: String(name).trim(), phone: normalizedPhone }, totalBdt, items: validItems };
+      return { booking: bookingRow, table, slot, user: { name: cleanName, phone: normalizedPhone }, totalBdt, items: validItems };
     });
 
     emitBookingUpdate({ type: 'booking.updated', date: String(date).slice(0,10), slotId: Number(slotId), tableId: Number(tableId), status: 'CONFIRMED', bookingId: booking.booking.id, token: booking.booking.token });
@@ -125,7 +149,11 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (e: unknown) {
     console.error('POST /api/bookings failed', e);
-    const err = e as { message?: string; status?: number };
-    return NextResponse.json({ error: err?.message || 'Failed to create booking' }, { status: err?.status || 500 });
+    const err = e as { message?: string; status?: number; code?: string };
+    if (err.code === '23505') {
+      return NextResponse.json({ error: 'This table was just booked for the selected slot. Please choose another table.' }, { status: 409 });
+    }
+    // Only show messages we threw on purpose; hide raw database errors from customers
+    return NextResponse.json({ error: err?.status ? err.message : 'Failed to create booking' }, { status: err?.status || 500 });
   }
 }

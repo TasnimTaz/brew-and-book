@@ -1,31 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ADMIN_COOKIE, createAdminSession, safeEqual } from '@/lib/admin-auth';
+
+const attempts = new Map<string, { count: number; resetAt: number }>();
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const now = Date.now();
+    const cur = attempts.get(ip);
+    if (cur && cur.resetAt > now && cur.count >= 10) {
+      return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 });
+    }
+    attempts.set(ip, cur && cur.resetAt > now ? { ...cur, count: cur.count + 1 } : { count: 1, resetAt: now + 15 * 60_000 });
+
     const { email, password } = await request.json();
 
-    const expectedEmail = process.env.ADMIN_EMAIL || 'admin@brewbook.local';
-    const expectedPassword = process.env.ADMIN_PASSWORD || 'change-me-in-production';
-
-    // Allow configured credentials or convenient fallback admin/admin123
-    const isValid =
-      (email === expectedEmail && (password === expectedPassword || password === 'admin123')) ||
-      (email === 'admin@brewbook.local' && (password === 'admin123' || password === expectedPassword));
-
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    const isProd = process.env.NODE_ENV === 'production';
+    const expectedEmail = process.env.ADMIN_EMAIL || (isProd ? '' : 'admin@brewbook.local');
+    const expectedPassword = process.env.ADMIN_PASSWORD || (isProd ? '' : 'admin123');
+    if (!expectedEmail || !expectedPassword) {
+      return NextResponse.json({ error: 'Admin login is not configured on the server' }, { status: 500 });
+    }
+    if (isProd && expectedPassword === 'change-me-in-production') {
+      return NextResponse.json({ error: 'Admin login is not configured on the server' }, { status: 500 });
     }
 
-    const response = NextResponse.json({ success: true, email });
-    // Set admin cookie for 7 days
-    response.cookies.set('brew_admin_token', 'authenticated_admin_session', {
+    const ok = safeEqual(String(email || ''), expectedEmail) && safeEqual(String(password || ''), expectedPassword);
+    if (!ok) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+
+    const session = createAdminSession(expectedEmail);
+    if (!session) return NextResponse.json({ error: 'Server secret is not configured' }, { status: 500 });
+
+    attempts.delete(ip);
+    const response = NextResponse.json({ success: true, email: expectedEmail });
+    response.cookies.set(ADMIN_COOKIE, session, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProd,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
-
     return response;
   } catch {
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });
@@ -34,6 +48,6 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true });
-  response.cookies.delete('brew_admin_token');
+  response.cookies.delete(ADMIN_COOKIE);
   return response;
 }

@@ -13,19 +13,16 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const httpServer = createServer((req, res) => handle(req, res));
   const io = new Server(httpServer, {
-    cors: { origin: '*', methods: ['GET', 'POST'] },
+    cors: { origin: dev ? true : (process.env.NEXT_PUBLIC_APP_URL || false), methods: ['GET', 'POST'] },
     path: '/socket.io',
   });
 
   global.__brewBookIO = io;
 
+  const valid = (p) => p && /^\d{4}-\d{2}-\d{2}$/.test(String(p.date)) && Number.isInteger(Number(p.slotId));
   io.on('connection', (socket) => {
-    socket.on('join-slot', ({ date, slotId }) => {
-      if (date && slotId) socket.join(`slot:${date}:${slotId}`);
-    });
-    socket.on('leave-slot', ({ date, slotId }) => {
-      if (date && slotId) socket.leave(`slot:${date}:${slotId}`);
-    });
+    socket.on('join-slot', (p) => { if (valid(p)) socket.join(`slot:${p.date}:${Number(p.slotId)}`); });
+    socket.on('leave-slot', (p) => { if (valid(p)) socket.leave(`slot:${p.date}:${Number(p.slotId)}`); });
   });
 
   httpServer.listen(port, hostname, () => {
