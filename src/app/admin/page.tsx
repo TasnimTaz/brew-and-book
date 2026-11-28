@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Table, MenuCategory, MenuItem } from '@/types';
+import AdminBookings from '@/components/AdminBookings';
 import {
   CheckIcon,
   CoffeeIcon,
@@ -16,7 +17,7 @@ import {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'menu' | 'tables'>('menu');
+  const [activeTab, setActiveTab] = useState<'menu' | 'tables' | 'bookings'>('bookings');
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
@@ -425,7 +426,18 @@ export default function AdminPage() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex gap-2 border-b border-border">
+        <div className="flex gap-2 overflow-x-auto border-b border-border">
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'bookings'
+                ? 'border-primary-dark text-primary-dark'
+                : 'border-transparent text-muted hover:text-foreground'
+            }`}
+          >
+            <CheckIcon className="h-4 w-4" />
+            <span>Bookings &amp; Payments</span>
+          </button>
           <button
             onClick={() => setActiveTab('menu')}
             className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
@@ -451,6 +463,8 @@ export default function AdminPage() {
         </div>
 
         {/* TAB 1: MENU */}
+        {activeTab === 'bookings' && <AdminBookings adminFetch={adminFetch} />}
+
         {activeTab === 'menu' && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
